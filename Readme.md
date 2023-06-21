@@ -1,11 +1,13 @@
+Kast is an ArgoCD 'applications of applications' system designed to function in conjunction with other components of the magical k8s framework. This setup includes the Spellbook specification, Rune style charting, and the RunicIndexer, which provides access to various glyphs that can be used to augment existing spells.
 
-Kast is an argocd apps of apps to work in conjuction with the rest of the magical kubernetes abstraction that includes the spellbooc spec, runes style of charting and the runicIndexer to access the diferent glyphs u can use to extend exisiting spells.
+The use of a pseudo-magical lexicon, inspired by Arthur C. Clark's three laws, is a conscious effort to avoid confusion with the often-overlapping terminologies prevalent in technology. For instance, differentiating between issues that arise on the 'deployment side' versus those that occur within the 'deployment object' can often be confusing. To streamline the process and make terminology easier to comprehend, the term 'spell' has been introduced to refer to an 'application', while 'spellDefinition' refers to the configuration of a spell.
 
-we are using pseudo-magical lexicon becauese the three laws of Arthur C. Clark and because all the other techy words are already taken. What do i mean with this, how many times do u needed to explain that the issue is on the deployment side no in the deployment object and why are thouse diferent things or for us started happening witht the app definition and what an app is so we take a easy route and call it spell and the values or configuration or how do u need to config any given spell is called a definition hence a spellDefinition.
+The Spellbook is a specification of a Git repository that houses configurations, analogous to chapters and spells. It is designed to simplify the classification of configurations for different clusters, production environments, or even smaller development spaces.
 
-we combine our spells in a spellbook that is a specification of a git repository with some files a directories that we call chapters and spells. the idea behind this was how do u call the thingie that holds all ur configurations for a cluster or production or even the space for a little dev enviroment.
+To enhance the versatility of spells, a Rune specification is used with its corresponding glyph to define a Helm chart or Kubernetes objects that can be incorporated into a spell. This system allows for the efficient detection and use of common resources. For example, it facilitates the identification of the default Istio gateway name provided by the book, which is used to create virtual services and mesh entries for other spells, such as ArgoCD or Vault.
 
-to add a way to extend ur spells in a simple way we use a rune specification with his glyph to define a helm chart or some k8s objects u want to use in a spell. for example we use this way to detect the name of the istio gateway the book provides by default and is used to create the virtual services and mesh entry for other spells like the argocd or vault ones. (more on this later)
+To ensure that the system is functional and efficient, continuous iterations and improvements are implemented based on ongoing observations and feedback.
+
 
 ## Usage
 to get the minimal definition of an spell u can use the default spell defined on ur book that we call summon because it summons ur code to life or to a healthy k8s state.
