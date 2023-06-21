@@ -1,0 +1,56 @@
+
+
+values.appParams = $appParams
+
+values.name = "libro"
+
+spellbook.book = index
+
+$spellbook.annex=buildAnnex($spellbook)
+
+for chapter in chapters
+  if chapter.index not empty:
+    spellbook[chapter.name] = chapter.index
+  spellbook[chapter.name] = chapterIndex
+  for spell in spells
+    $stack.appParams = $values.appParams
+    if spell in $spell:
+      $stack.definition=addAsAdeepMerge($spellDefinition.spell.definition)
+    else:
+      $stack.spell=addAsAdeepMerge($spellbook.defaultSpell.spell)
+      $stack.definition=addAsAdeepMerge($spellbook.defaultSpell.definition)
+    if $stack.spell.notConfigInclude == false:
+      $stack.definition=addAsAdeepMerge($chapterIndex.definition)
+    if $stack.runes not empty:
+      for rune in spell.runes:
+        if repository not in rune:
+          $stack.[rune].spell=addAsAdeepMerge($spellbook.defaultSpell.spell)
+          $stack.[rune].definition=addAsAdeepMerge($spellbook.defaultSpell.definition)
+        else:
+          if $stack.spell.notConfigInclude == false:
+            $stack.[rune].definition=addAsAdeepMerge($chapterIndex.definition)
+        #esto es dentro del for pero tiene q pasar despues del if
+        $stack.appParams=addAsAdeepMerge($runes.appParams) #estso sige el patron de argocd incluso
+
+    #esto es dentro del for de spells pero tiene q pasar al final
+    appRender($stack)
+
+
+
+buildAnnex(spellbook)
+  annex = {}
+  for chapter in spellbook.chapters:
+    for spell in chapter.spells:
+      if spell.annex not empty:
+        annex = append(renderAnnex(spell)) 
+        #ahora vamos a hacer load del directorio annex
+  return annex
+      
+
+
+def appRender(spellDefinition, annex):
+  todo lo de la app muy lindo hasta q sources de helm
+  sourceRender(spellDefinition)
+  if spellDefinition.rune not empty:
+    for rune in spellDefinition.rune:
+      sourceRender(rune)

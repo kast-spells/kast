@@ -1,0 +1,9 @@
+# kast - Kubernetes arcane spelling technology
+# Copyright (C) 2023 namenmalkv@gmail.com
+#
+# This work is licensed under the Creative Commons Attribution-ShareAlike 
+# NonCommercial (CC BY-SA-NC) license. See the LICENSE file for details.
+apiVersion: v2
+name: kast
+description: kast renderer
+version: "0.1"
