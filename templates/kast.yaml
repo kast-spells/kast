@@ -66,7 +66,7 @@
       {{- if $spellToStack.appParams }}
         {{- $appParams := merge $appParams $spellToStack.appParams }}
       {{- end }}
-      {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell) }}
+      {{- $stack := merge $stack $spellbook.book.defaultSpell }}
       {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
     {{- end }}
 
