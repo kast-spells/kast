@@ -66,19 +66,30 @@
       {{- if $spellToStack.appParams }}
         {{- $appParams := merge $appParams $spellToStack.appParams }}
       {{- end }}
-      {{- $stack := merge $stack $spellbook.book.defaultSpell }}
       {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
+      {{- /*
+      # {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell) }}
+
+      */}}
+#debug
+{{- if $.Values.debug }}
+---
+defaultSpellStack-{{ $stack.name }}:
+{{- $stackBook := merge $stack (dict "spell" $spellbook.book.defaultSpell) }}
+{{- $stack2 := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
+{{- toYaml $stackBook | nindent 2 }}
+{{- end }} 
     {{- end }}
 
-    {{- if $chapter.defaultSpell }}
-      {{- $stack := merge $stack (dict "spell" $spellbook.chapter.defaultSpell.spell) }}
-      {{- if $chapter.defaultSpell.definition }}
-        {{- $stack := merge $stack (dict "definition" $spellbook.book.defaultSpell.definition) }}
-        {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
-      {{- end }}
-    {{- else }}
-        {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell.spell) }}
-    {{- end }}
+    # {{- if $chapter.defaultSpell }}
+    #   {{- $stack := merge $stack (dict "spell" $spellbook.chapter.defaultSpell.spell) }}
+    #   {{- if $chapter.defaultSpell.definition }}
+    #     {{- $stack := merge $stack (dict "definition" $spellbook.book.defaultSpell.definition) }}
+    #     {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
+    #   {{- end }}
+    # {{- else }}
+    #     {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell.spell) }}
+    # {{- end }}
 
     {{- if $spellToStack.runes }}
       {{- $stack := merge $stack (dict "runes" $spellToStack.runes) }}
@@ -129,13 +140,14 @@ spec:
     {{- end }}  
   project: {{ default $spellbook.book.name $stack.useExistingProject }}
   sources:
-    - repoURL: {{ $stack.spell.repository }}
-      {{- if $stack.spell.chart }}
-      chart: {{ $stack.spell.chart }}
+    - repoURL: {{ default $spellbook.book.defaultSpell.repository (default ($spellbook.chapter.defaultSpell).repository $stack.spell.repository) }}
+      {{- $chart := default $spellbook.book.defaultSpell.chart (default ($spellbook.chapter.defaultSpell).chart $stack.spell.chart) }}
+      {{- if $chart }}
+      chart: {{ $chart }}
       {{- else }}
-      path: {{ $stack.spell.path }}
+      path: {{ default $spellbook.book.defaultSpell.path (default (($spellbook.chapter.defaultSpell).path) $stack.spell.path) }}
       {{- end }}
-      targetRevision: {{  $stack.spell.revision }}
+      targetRevision: {{  default $spellbook.book.defaultSpell.revision (default ($spellbook.chapter.defaultSpell).revision $stack.spell.revision ) }}
       helm:
       {{- if $stack.spell.skipCrds }}
         skipCrds: true
@@ -146,7 +158,7 @@ spec:
             value: {{ $stack.name }}
       {{- end }}
         values: |
-          {{- if and $stack.spell.definition }}
+          {{- if $stack.spell.definition }}
           {{- toYaml $stack.spell.definition | nindent 10 }}
           {{- end }}
           {{- if not $stack.spell.addKastDefinitions }}
