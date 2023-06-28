@@ -66,18 +66,18 @@
       {{- if $spellToStack.appParams }}
         {{- $appParams := merge $appParams $spellToStack.appParams }}
       {{- end }}
-      {{- $stack := merge $stack $spellbook.book.defaultSpell }}
+      {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell) }}
       {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
     {{- end }}
 
     {{- if $chapter.defaultSpell }}
-      {{- if $chapter.defaultSpell.spell }}
-        {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell.spell) }}
-      {{- end }}
+      {{- $stack := merge $stack (dict "spell" $spellbook.chapter.defaultSpell.spell) }}
       {{- if $chapter.defaultSpell.definition }}
         {{- $stack := merge $stack (dict "definition" $spellbook.book.defaultSpell.definition) }}
         {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
       {{- end }}
+    {{- else }}
+        {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell.spell) }}
     {{- end }}
 
     {{- if $spellToStack.runes }}
