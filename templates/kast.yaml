@@ -60,9 +60,11 @@
     {{- else }}
       {{- if not $spellToStack.name }}
         {{- $stack := merge $stack (dict "name" $spellPath) }}
+      {{- else }}
+        {{- $stack := merge $stack (dict "name" $spellToStack.name) }}
       {{- end }}
       {{- if $spellToStack.appParams }}
-      {{- $appParams := merge $appParams $spellToStack.appParams }}
+        {{- $appParams := merge $appParams $spellToStack.appParams }}
       {{- end }}
       {{- $stack := merge $stack $spellbook.book.defaultSpell }}
       {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
