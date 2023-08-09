@@ -168,7 +168,7 @@ spec:
       {{- $glyphs := $spellDefinition.glyphs }}
       {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
       {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
-      helm:
+      helm: #add helm
         values: |
           glyphs:
           {{- toYaml $spellDefinition.glyphs | nindent 12 }}
