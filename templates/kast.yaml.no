@@ -1,0 +1,400 @@
+# kast - Kubernetes arcane spelling technology
+# Copyright (C) 2023 namenmalkv@gmail.com
+#
+# This work is licensed under the Creative Commons Attribution-ShareAlike 
+# NonCommercial (CC BY-SA-NC) license. See the LICENSE file for details.
+
+{{- $spellbook := dict }}
+{{- $_ := "" }}
+
+
+{{- $path := printf "spellbook/%s/index.yaml" .Values.name }}
+{{- if .Files.Glob $path }}
+  {{- $default := .Files.Get $path | fromYaml }}
+  {{- $_ := merge $default (dict "name" $.Values.name ) }}
+  {{- $spellbook := merge $spellbook (dict "book" $default) }}
+{{- end }}
+
+##annex definition
+{{- $annexDefinition := dict }}
+{{- $annex := dict }}
+{{- $path := print "spellbook/" $spellbook.book.name "/annex/*.y*ml"}}
+{{- range $annexPath, $_ := .Files.Glob $path }}
+  {{- $annexDefinition = $.Files.Get $annexPath | fromYaml }}
+  {{- $annex := mustMerge $annex $annexDefinition  }}
+{{- end }}
+{{- $path := print "spellbook/" $spellbook.book.name "/annex/*.y*ml"}}
+{{- $annex := list }}
+{{- range $annexPath, $_ := .Files.Glob $path }}
+  {{- $annexDefinitions := ($.Files.Get $annexPath | fromYaml).annex }}
+  {{- range $annexDefinition := $annexDefinitions }}
+    {{- $annex = append $annex $annexDefinition }}
+  {{- end }}
+{{- end }}
+##annex definition
+{{- $spellbook := merge $spellbook (dict "annex" $annex) }}
+
+# range of chapters
+{{- range $chapterName := $spellbook.book.chapters }}
+  {{- $chapter := dict "name" $chapterName }}
+  {{- $path := print "spellbook/" $spellbook.book.name "/" $chapterName "/index.yaml" }}
+  {{- if $.Files.Glob $path }}
+    {{- $chapter := .Files.Get $path | fromYaml }}
+  {{- end }}  
+  {{- $spellbook := mergeOverwrite $spellbook (dict "chapter" $chapter) }}
+
+# range of spells
+  {{- $path := print "spellbook/" $spellbook.book.name "/" $chapterName "/*.y*ml"}}
+  {{- range $spellPath, $_ := $.Files.Glob $path }}
+    {{- $stack := dict }}
+    {{- $appParams := dict }}
+    {{- $appParams := merge $appParams $.Values.appParams }}
+    {{- $spellToStack := $.Files.Get $spellPath | fromYaml }}
+
+    {{- if $spellToStack.spell }}
+      {{- if $spellToStack.spell.appParams }}
+        {{- $appParams := merge $appParams $spellToStack.spell.appParams }}
+      {{- end }}
+      {{- $stack := merge $stack (dict "name" $spellToStack.spell.name ) }}
+      {{- $stack := merge $stack (dict "spell" $spellToStack.spell) }}
+    {{- else }}
+      {{- if not $spellToStack.name }}
+        {{- $stack := merge $stack (dict "name" $spellPath) }}
+      {{- else }}
+        {{- $stack := merge $stack (dict "name" $spellToStack.name) }}
+      {{- end }}
+      {{- if $spellToStack.appParams }}
+        {{- $appParams := merge $appParams $spellToStack.appParams }}
+      {{- end }}
+      {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
+      {{- /*
+      # {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell) }}
+
+      */}}
+#debug
+{{- if $.Values.debug }}
+---
+defaultSpellStack-{{ $stack.name }}:
+{{- $stackBook := merge $stack (dict "spell" $spellbook.book.defaultSpell) }}
+{{- $stack2 := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
+{{- toYaml $stackBook | nindent 2 }}
+{{- end }} 
+    {{- end }}
+
+    # {{- if $chapter.defaultSpell }}
+    #   {{- $stack := merge $stack (dict "spell" $spellbook.chapter.defaultSpell.spell) }}
+    #   {{- if $chapter.defaultSpell.definition }}
+    #     {{- $stack := merge $stack (dict "definition" $spellbook.book.defaultSpell.definition) }}
+    #     {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
+    #   {{- end }}
+    # {{- else }}
+    #     {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell.spell) }}
+    # {{- end }}
+
+    {{- if $spellToStack.runes }}
+      {{- $stack := merge $stack (dict "runes" $spellToStack.runes) }}
+    {{- end }}
+#debug
+{{- if $.Values.debug }}
+---
+stack-{{ $stack.name }}:
+{{- toYaml $stack | nindent 2 }}
+{{- else }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $stack.name }}
+  namespace: {{ default "argocd" $spellbook.book.argocdNamespace }}
+  {{- if $stack.spell.customFinalizers }}
+  finalizers:
+  {{- range $finalizer := $stack.spell.customFinalizers }}
+    - {{ $finalizer }}
+  {{- end }}
+  {{- end }}
+  {{- with $stack.annotations }}
+  annotations:
+  {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  syncPolicy:
+    {{- if $appParams.managedNamespaceMetadata }}
+      {{- with $appParams.managedNamespaceMetadata }}
+    managedNamespaceMetadata:
+    {{- toYaml . | nindent 6 }}
+      {{- end }}
+    {{- end }}
+    {{- if not $appParams.disableAutoSync }}
+    {{- with $appParams.syncPolicy.automated }}
+    automated:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- end }}
+    {{- with $appParams.syncPolicy.syncOptions }}
+    syncOptions:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with $appParams.syncPolicy.retry }}
+    retry:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}  
+  project: {{ default $spellbook.book.name $stack.useExistingProject }}
+  sources:
+    - repoURL: {{ default $spellbook.book.defaultSpell.repository (default ($spellbook.chapter.defaultSpell).repository $stack.spell.repository) }}
+      {{- $chart := default $spellbook.book.defaultSpell.chart (default ($spellbook.chapter.defaultSpell).chart $stack.spell.chart) }}
+      {{- if $chart }}
+      chart: {{ $chart }}
+      {{- else }}
+      path: {{ default $spellbook.book.defaultSpell.path (default (($spellbook.chapter.defaultSpell).path) $stack.spell.path) }}
+      {{- end }}
+      targetRevision: {{  default $spellbook.book.defaultSpell.revision (default ($spellbook.chapter.defaultSpell).revision $stack.spell.revision ) }}
+      helm:
+      {{- if $stack.spell.skipCrds }}
+        skipCrds: true
+      {{- end }}
+      {{- if not $stack.spell.addKastDefinitions }}
+        parameters:
+          - name: name
+            value: {{ $stack.name }}
+      {{- end }}
+        values: |
+          {{- if $stack.spell.definition }}
+          {{- toYaml $stack.spell.definition | nindent 10 }}
+          {{- end }}
+          {{- if not $stack.spell.addKastDefinitions }}
+          {{- toYaml $spellbook | nindent 10 }}
+          {{- end }}
+    {{- if $stack.runes }}
+    {{- range $rune := $stack.runes }}
+      {{- if not $rune.name }}
+        {{- $_ := merge $rune (dict "name" (printf "%s-rune" $stack.spell.name))  }}
+      {{- end }}
+    - repoURL: {{ $rune.repository }}
+      {{- if $rune.chart }}
+      chart: {{ $rune.chart }}
+        {{- else }}
+      path: {{ $rune.path }}
+        {{- end }}
+      targetRevision: {{  $rune.revision }}
+      helm:
+        {{- if $rune.skipCrds }}
+        skipCrds: true
+        {{- end }}
+        {{- if not $rune.addKastDefinitions }}
+        parameters:
+          - name: name
+            value: {{ $rune.name }}
+          - name: spell.name
+            value: {{ $stack.spell.name }}
+        {{- end}}
+        values: |
+          {{- if $rune.definition }}
+          {{- toYaml $rune.definition | nindent 10 }}
+          {{- end }}
+          {{- if not $stack.addKastDefinitions }}
+          {{- toYaml $spellbook | nindent 10 }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: {{ if $stack.spell.namespace }}{{ $stack.spell.namespace }}{{ else }}{{ default $stack.name $stack.namespace }}{{ end }}
+  {{- if ($appParams).ignoreDifferences }}
+  ignoreDifferences:
+  {{- toYaml $appParams.ignoreDifferences | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- if not $.Values.debug}}
+{{- if not $spellbook.useExistingProject }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $spellbook.book.name }}
+  namespace: argocd
+  labels:
+    enchantment: circle
+    circle: {{ $spellbook.book.name }}
+spec:
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  sourceRepos: 
+    - '*'
+  destinations:
+  - namespace: '*'
+    server: https://kubernetes.default.svc
+{{- end }}
+{{- end }}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{{- define "argoApp" -}}
+{{ $spell := index . 0 }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ default $spell.name $spell.spell.name}}
+  namespace: {{ default "argocd" $spellbook.argocdNamespace }}
+spec:
+  syncPolicy:
+    {{- if $appParams.managedNamespaceMetadata }}
+      {{- with $appParams.managedNamespaceMetadata }}
+    managedNamespaceMetadata:
+    {{- toYaml . | nindent 6 }}
+      {{- end }}
+    {{- end }}
+    {{- if not $appParams.disableAutoSync }}
+    {{- with $appParams.syncPolicy.automated }}
+    automated:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- end }}
+    {{- with $appParams.syncPolicy.syncOptions }}
+    syncOptions:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with $appParams.syncPolicy.retry }}
+    retry:
+    {{- toYaml . | nindent 6 }}
+    {{- end }}  
+  {{- if ($appParams).ignoreDifferences }}
+  ignoreDifferences:
+  {{- toYaml $appParams.ignoreDifferences | nindent 4 }}
+  {{- end }}
+  project: {{ default $spellbook.name $spell.useExistingProject }}
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: {{ if $spell.spell.namespace }}{{ $spell.spell.namespace }}{{ else }}{{ default $spell.name $spell.namespace }}{{ end }}
+  sources:
+    - repoURL: {{ default $spellbook.defaultSpell.repository (default ($spellbook.chapter.defaultSpell).repository $spell.spell.repository) }}
+      {{- $chart := default $spellbook.defaultSpell.chart (default ($spellbook.chapter.defaultSpell).chart $spell.spell.chart) }}
+      {{- if $chart }}
+      chart: {{ $chart }}
+      {{- else }}
+      path: {{ default $spellbook.defaultSpell.path (default (($spellbook.chapter.defaultSpell).path) $spell.spell.path) }}
+      {{- end }}
+      targetRevision: {{  default $spellbook.defaultSpell.revision (default ($spellbook.chapter.defaultSpell).revision $spell.spell.revision ) }}
+      helm:
+      {{- if $spell.spell.skipCrds }}
+        skipCrds: true
+      {{- end }}
+      {{- if not $spell.spell.addKastDefinitions }}
+        parameters:
+          - name: name
+            value: {{ $spell.name }}
+      {{- end }}
+        values: |
+          {{- if $spell.spell.definition }}
+          {{- toYaml $spell.spell.definition | nindent 10 }}
+          {{- end }}
+          {{- if not $spell.spell.addKastDefinitions }}
+          {{- toYaml $spellbook | nindent 10 }}
+          {{- end }}
+    {{- if $spell.runes }}
+    {{- range $rune := $spell.runes }}
+      {{- if not $rune.name }}
+        {{- $_ := merge $rune (dict "name" (printf "%s-rune" $spell.spell.name))  }}
+      {{- end }}
+    - repoURL: {{ $rune.repository }}
+      {{- if $rune.chart }}
+      chart: {{ $rune.chart }}
+        {{- else }}
+      path: {{ $rune.path }}
+        {{- end }}
+      targetRevision: {{  $rune.revision }}
+      helm:
+        {{- if $rune.skipCrds }}
+        skipCrds: true
+        {{- end }}
+        {{- if not $rune.addKastDefinitions }}
+        parameters:
+          - name: name
+            value: {{ $rune.name }}
+          - name: spell.name
+            value: {{ $spell.spell.name }}
+        {{- end}}
+        values: |
+          {{- if $rune.definition }}
+          {{- toYaml $rune.definition | nindent 10 }}
+          {{- end }}
+          {{- if not $spell.addKastDefinitions }}
+          {{- toYaml $spellbook | nindent 10 }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+
+
+{{- end -}}

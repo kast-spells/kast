@@ -3,116 +3,87 @@
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 
 # NonCommercial (CC BY-SA-NC) license. See the LICENSE file for details.
+{{- define "debug" -}}
+{{- if (index . 0) -}}
+{{ printf "%s:" (index . 2) }}
+{{- toYaml (index . 1) | nindent 2 -}}
+{{- end -}}
+{{- end -}}
 
-{{- $spellbook := dict }}
-{{- $_ := "" }}
 
+{{- define "configmap" -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ index . 0 }}
+data:
+  {{- toYaml (index . 1) | nindent 2 }}
+{{- end -}}
 
-{{- $path := printf "spellbook/%s/index.yaml" .Values.name }}
+{{- $spellbook :=  dict "appParams" $.Values.appParams  }}
+
+#se puede agregar un if aca para q si no este definido el libro haga un "ls" y ver q libros hay y haga de multibook on one sweep
+
+{{- $path := printf "library/%s/index.yaml" .Values.name }}
 {{- if .Files.Glob $path }}
   {{- $default := .Files.Get $path | fromYaml }}
-  {{- $_ := merge $default (dict "name" $.Values.name ) }}
-  {{- $spellbook := merge $spellbook (dict "book" $default) }}
+  {{- $_ := mergeOverwrite $default (dict "name" $.Values.name ) }}
+  {{- $_ := mergeOverwrite $spellbook $default }}
 {{- end }}
 
-##annex definition
-{{- $annexDefinition := dict }}
-{{- $annex := dict }}
-{{- $path := print "spellbook/" $spellbook.book.name "/annex/*.y*ml"}}
-{{- range $annexPath, $_ := .Files.Glob $path }}
-  {{- $annexDefinition = $.Files.Get $annexPath | fromYaml }}
-  {{- $annex := mustMerge $annex $annexDefinition  }}
-{{- end }}
-{{- $path := print "spellbook/" $spellbook.book.name "/annex/*.y*ml"}}
-{{- $annex := list }}
-{{- range $annexPath, $_ := .Files.Glob $path }}
-  {{- $annexDefinitions := ($.Files.Get $annexPath | fromYaml).annex }}
-  {{- range $annexDefinition := $annexDefinitions }}
-    {{- $annex = append $annex $annexDefinition }}
+{{ include "debug" (list $.Values.debug $spellbook "spellbook" ) }}
+
+##lexicon definition must be from a config map in some place
+{{- $lexiconDefinition := dict }}
+{{- $path := print "library/" $spellbook.name "/_lexicon/*.y*ml"}}
+{{- $lexicon := list }}
+{{- range $lexiconPath, $_ := .Files.Glob $path }}
+  {{- $lexiconDefinitions := ($.Files.Get $lexiconPath | fromYaml).lexicon }}
+  {{- range $lexiconDefinition := $lexiconDefinitions }}
+    {{- $lexicon = append $lexicon $lexiconDefinition }}
   {{- end }}
 {{- end }}
-##annex definition
-{{- $spellbook := merge $spellbook (dict "annex" $annex) }}
+##lexicon merge 
+{{- $_ := mergeOverwrite $spellbook (dict "lexicon" $lexicon) }}
+{{ include "debug" (list $.Values.debug $spellbook "spellbook" ) }}
+{{include "configmap" (list "lexicon" (dict "lexicon" $lexicon) )}}
 
-# range of chapters
-{{- range $chapterName := $spellbook.book.chapters }}
-  {{- $chapter := dict "name" $chapterName }}
-  {{- $path := print "spellbook/" $spellbook.book.name "/" $chapterName "/index.yaml" }}
+{{ range $chapterName := $spellbook.chapters }}
+  {{- $chapterIndex := dict }}
+  {{- $path := print "library/" $spellbook.name "/" $chapterName "/index.yaml" }}
   {{- if $.Files.Glob $path }}
-    {{- $chapter := .Files.Get $path | fromYaml }}
-  {{- end }}  
-  {{- $spellbook := mergeOverwrite $spellbook (dict "chapter" $chapter) }}
-
-# range of spells
-  {{- $path := print "spellbook/" $spellbook.book.name "/" $chapterName "/*.y*ml"}}
+    {{- $chapterIndex = $.Files.Get $path | fromYaml }}
+  {{- end }}
+  {{- $path := print "library/" $spellbook.name "/" $chapterName "/*.y*ml"}}
   {{- range $spellPath, $_ := $.Files.Glob $path }}
-    {{- $stack := dict }}
-    {{- $appParams := dict }}
-    {{- $appParams := merge $appParams $.Values.appParams }}
-    {{- $spellToStack := $.Files.Get $spellPath | fromYaml }}
-
-    {{- if $spellToStack.spell }}
-      {{- if $spellToStack.spell.appParams }}
-        {{- $appParams := merge $appParams $spellToStack.spell.appParams }}
+  {{- if not (eq $spellPath (print "library/" $spellbook.name "/" $chapterName "/index.yaml")) }}
+    {{- $sources := list }}
+    {{- $appParams := deepCopy $spellbook.appParams }} 
+    {{- $spellDefinition := ($.Files.Get $spellPath | fromYaml) }}
+    {{- $_ := mergeOverwrite $appParams (default dict ($chapterIndex.appParams)) }}
+    {{- $_ := mergeOverwrite $appParams (deepCopy (default dict ($spellDefinition.appParams ))) }}
+    {{- $spell := (dict "name" $spellDefinition.name ) }}
+    {{- if $spellDefinition.runes }}
+      {{- range $rune := $spellDefinition.runes }}
+        {{- $sources = append $sources $rune }}
+        {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
       {{- end }}
-      {{- $stack := merge $stack (dict "name" $spellToStack.spell.name ) }}
-      {{- $stack := merge $stack (dict "spell" $spellToStack.spell) }}
-    {{- else }}
-      {{- if not $spellToStack.name }}
-        {{- $stack := merge $stack (dict "name" $spellPath) }}
-      {{- else }}
-        {{- $stack := merge $stack (dict "name" $spellToStack.name) }}
-      {{- end }}
-      {{- if $spellToStack.appParams }}
-        {{- $appParams := merge $appParams $spellToStack.appParams }}
-      {{- end }}
-      {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
-      {{- /*
-      # {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell) }}
-
-      */}}
-#debug
-{{- if $.Values.debug }}
----
-defaultSpellStack-{{ $stack.name }}:
-{{- $stackBook := merge $stack (dict "spell" $spellbook.book.defaultSpell) }}
-{{- $stack2 := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
-{{- toYaml $stackBook | nindent 2 }}
-{{- end }} 
     {{- end }}
 
-    # {{- if $chapter.defaultSpell }}
-    #   {{- $stack := merge $stack (dict "spell" $spellbook.chapter.defaultSpell.spell) }}
-    #   {{- if $chapter.defaultSpell.definition }}
-    #     {{- $stack := merge $stack (dict "definition" $spellbook.book.defaultSpell.definition) }}
-    #     {{- $stack := merge $stack (dict "spell" (dict "definition" $spellToStack)) }}
-    #   {{- end }}
-    # {{- else }}
-    #     {{- $stack := merge $stack (dict "spell" $spellbook.book.defaultSpell.spell) }}
-    # {{- end }}
 
-    {{- if $spellToStack.runes }}
-      {{- $stack := merge $stack (dict "runes" $spellToStack.runes) }}
-    {{- end }}
-#debug
-{{- if $.Values.debug }}
----
-stack-{{ $stack.name }}:
-{{- toYaml $stack | nindent 2 }}
-{{- else }}
+
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ $stack.name }}
-  namespace: {{ default "argocd" $spellbook.book.argocdNamespace }}
-  {{- if $stack.spell.customFinalizers }}
+  name: {{ $spellDefinition.name }}
+  namespace: {{ default "argocd" $spellbook.argocdNamespace }}
+  {{- with ($spellDefinition.app).customFinalizers }}
   finalizers:
-  {{- range $finalizer := $stack.spell.customFinalizers }}
-    - {{ $finalizer }}
+  {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- end }}
-  {{- with $stack.annotations }}
+  {{- with ($spellDefinition.app).annotations }}
   annotations:
   {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -138,36 +109,57 @@ spec:
     retry:
     {{- toYaml . | nindent 6 }}
     {{- end }}  
-  project: {{ default $spellbook.book.name $stack.useExistingProject }}
+  project: {{ default $spellbook.name $spellDefinition.useExistingProject }}
   sources:
-    - repoURL: {{ default $spellbook.book.defaultSpell.repository (default ($spellbook.chapter.defaultSpell).repository $stack.spell.repository) }}
-      {{- $chart := default $spellbook.book.defaultSpell.chart (default ($spellbook.chapter.defaultSpell).chart $stack.spell.chart) }}
+  {{- $chart := "" }}
+  {{- $path := "" }}
+  {{- $repository := default $spellbook.defaultSpell.repository ($chapterIndex.defaultSpell).repository }}
+  {{- $path := default $spellbook.defaultSpell.path ($chapterIndex.defaultSpell).path }}
+  {{- $chart := default $spellbook.defaultSpell.chart ($chapterIndex.defaultSpell).chart}}
+  {{- $revision := default $spellbook.defaultSpell.revision ($chapterIndex.defaultSpell).revision }}
+  {{- if or $spellDefinition.chart $spellDefinition.path }}
+  {{- $repository := $spellDefinition.repository }}
+  {{- $path := $spellDefinition.path }}
+  {{- $chart := $spellDefinition.chart }}
+  {{- $revision := $spellDefinition.revision }}
+  {{- end }}
+    - repoURL: {{ $repository }}
       {{- if $chart }}
       chart: {{ $chart }}
       {{- else }}
-      path: {{ default $spellbook.book.defaultSpell.path (default (($spellbook.chapter.defaultSpell).path) $stack.spell.path) }}
+      path: {{ $path }}
       {{- end }}
-      targetRevision: {{  default $spellbook.book.defaultSpell.revision (default ($spellbook.chapter.defaultSpell).revision $stack.spell.revision ) }}
+      targetRevision: {{ $revision }}
       helm:
-      {{- if $stack.spell.skipCrds }}
+      {{- if ($spellDefinition.app).skipCrds }}
         skipCrds: true
       {{- end }}
-      {{- if not $stack.spell.addKastDefinitions }}
-        parameters:
+      {{- if not $spellDefinition.cleanDefinition }}
+        parameters: #en este momento esto es un placeholder para ser usado pero todo esta sucediendo a nivel values
           - name: name
-            value: {{ $stack.name }}
+            value: {{ $spellDefinition.name }}
       {{- end }}
+      {{- $definition := "" }}
+      {{- if or $spellDefinition.chart $spellDefinition.path }}
+      {{- $definition = $spellDefinition.definition }}
+      {{- else }}
+      {{- $definition = deepCopy $spellDefinition }}
+      {{- $_ =  unset $definition "runes" }}
+      {{- end }}
+      {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
+      {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
         values: |
-          {{- if $stack.spell.definition }}
-          {{- toYaml $stack.spell.definition | nindent 10 }}
+          {{- if $spellDefinition }}
+          {{- toYaml $definition | nindent 10 }}
           {{- end }}
-          {{- if not $stack.spell.addKastDefinitions }}
-          {{- toYaml $spellbook | nindent 10 }}
+          {{- if not $spellDefinition.cleanDefinition }}
+          {{- toYaml $cleanSpellbook | nindent 10 }}
           {{- end }}
-    {{- if $stack.runes }}
-    {{- range $rune := $stack.runes }}
+    {{- if $spellDefinition.runes }}
+    {{- range $rune := $spellDefinition.runes }}
+    {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
       {{- if not $rune.name }}
-        {{- $_ := merge $rune (dict "name" (printf "%s-rune" $stack.spell.name))  }}
+        {{- $_ := merge $rune (dict "name" (printf "%s-rune" $spellDefinition.name))  }}
       {{- end }}
     - repoURL: {{ $rune.repository }}
       {{- if $rune.chart }}
@@ -185,50 +177,29 @@ spec:
           - name: name
             value: {{ $rune.name }}
           - name: spell.name
-            value: {{ $stack.spell.name }}
+            value: {{ $spellDefinition.name }}
         {{- end}}
         values: |
           {{- if $rune.definition }}
           {{- toYaml $rune.definition | nindent 10 }}
           {{- end }}
-          {{- if not $stack.addKastDefinitions }}
+          {{- if not $spellDefinition.addKastDefinitions }}
           {{- toYaml $spellbook | nindent 10 }}
           {{- end }}
         {{- end }}
       {{- end }}
   destination:
     server: "https://kubernetes.default.svc"
-    namespace: {{ if $stack.spell.namespace }}{{ $stack.spell.namespace }}{{ else }}{{ default $stack.name $stack.namespace }}{{ end }}
+    namespace: {{ if $spellDefinition.namespace }}{{ $spellDefinition.namespace }}{{ else }}{{ default $spellDefinition.name $spellDefinition.namespace }}{{ end }}
   {{- if ($appParams).ignoreDifferences }}
   ignoreDifferences:
   {{- toYaml $appParams.ignoreDifferences | nindent 4 }}
   {{- end }}
-{{- end }}
-{{- end }}
-{{- end }}
 
-{{- if not $.Values.debug}}
-{{- if not $spellbook.useExistingProject }}
----
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: {{ $spellbook.book.name }}
-  namespace: argocd
-  labels:
-    enchantment: circle
-    circle: {{ $spellbook.book.name }}
-spec:
-  clusterResourceWhitelist:
-  - group: '*'
-    kind: '*'
-  namespaceResourceWhitelist:
-  - group: '*'
-    kind: '*'
-  sourceRepos: 
-    - '*'
-  destinations:
-  - namespace: '*'
-    server: https://kubernetes.default.svc
-{{- end }}
+
+
+
+   {{ include "debug" (list $.Values.debug $sources $spellPath ) | nindent 0 }}
+  {{- end }}
+  {{- end }}
 {{- end }}
