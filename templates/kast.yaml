@@ -154,6 +154,8 @@ spec:
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
+          chapter:
+          {{- toYaml $chapterIndex | nindent 12 }}
           {{- end }}
     {{- if $spellDefinition.runes }}
     {{- range $rune := $spellDefinition.runes }}

@@ -52,11 +52,31 @@ secret = client.V1Secret(
     kind='Secret',
     type='Opaque',
     metadata=client.V1ObjectMeta(
-        name='argocd-ssh-secret',
+        name='hildy-ssh-secret',
         namespace='argocd',
         labels={'argocd.argoproj.io/secret-type': 'repo-creds'}
     ),
-    data={'sshPrivateKey': base64.b64encode(git_ssh_key.encode()).decode()}
+    data={
+        'sshPrivateKey': base64.b64encode(git_ssh_key.encode()).decode(),
+        "url": base64.b64encode("git@github.com:hildy-ai/".encode()).decode(),
+        }
+)
+
+k8s_client = client.CoreV1Api()
+k8s_client.create_namespaced_secret(namespace='argocd', body=secret)
+secret = client.V1Secret(
+    api_version='v1',
+    kind='Secret',
+    type='Opaque',
+    metadata=client.V1ObjectMeta(
+        name='kast-ssh-secret',
+        namespace='argocd',
+        labels={'argocd.argoproj.io/secret-type': 'repo-creds'}
+    ),
+    data={
+        'sshPrivateKey': base64.b64encode(git_ssh_key.encode()).decode(),
+        "url": base64.b64encode("git@github.com:kast-spells/".encode()).decode(),
+        }
 )
 
 k8s_client = client.CoreV1Api()
