@@ -18,4 +18,3 @@ spec:
       limit: 2
     syncOptions:
       - CreateNamespace=true
-      - Replace=true

@@ -73,6 +73,8 @@ data:
 
 
 
+
+
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -123,7 +125,7 @@ spec:
   {{- $chart := $spellDefinition.chart }}
   {{- $revision := $spellDefinition.revision }}
   {{- end }}
-    - repoURL: {{ $repository }}
+    - repoURL: {{ $repository }} #usa repo
       {{- if $chart }}
       chart: {{ $chart }}
       {{- else }}
@@ -135,7 +137,7 @@ spec:
         skipCrds: true
       {{- end }}
       {{- if not $spellDefinition.cleanDefinition }}
-        parameters: #en este momento esto es un placeholder para ser usado pero todo esta sucediendo a nivel values
+        parameters: #placeholder
           - name: name
             value: {{ $spellDefinition.name }}
       {{- end }}
@@ -153,10 +155,26 @@ spec:
           {{- toYaml $definition | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
-          book:
           {{- toYaml $cleanSpellbook | nindent 12 }}
           {{- toYaml $chapterIndex | nindent 10 }}
           {{- end }}
+
+    {{- if and $spellDefinition.glyphs (or $spellDefinition.chart $spellDefinition.path) }}
+      #glyphs usamos el summon por q es ademas el q hace los microservicios loq  simplifica el fiutur se puede cambiar en el futuro a una libreria aparte
+      #o utilizar varios repositorios con cada uno un glpho y aplicarlos
+    - repoURL: {{ $spellbook.defaultSpell.repository }} #usa summon
+      path: {{ $spellbook.defaultSpell.path }}
+      targetRevision: {{ $spellbook.defaultSpell.revision }}
+      {{- $glyphs := $spellDefinition.glyphs }}
+      {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
+      {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
+      helm:
+        values: |
+          glyphs:
+          {{- toYaml $spellDefinition.glyphs | nindent 12 }}
+          {{- toYaml $cleanSpellbook | nindent 10 }}
+          {{- toYaml $chapterIndex | nindent 10 }}
+    {{- end }}
     {{- if $spellDefinition.runes }}
     {{- range $rune := $spellDefinition.runes }}
     {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
@@ -182,11 +200,12 @@ spec:
             value: {{ $spellDefinition.name }}
         {{- end}}
         values: |
-          {{- if $rune.definition }}
-          {{- toYaml $rune.definition | nindent 10 }}
+          {{- if $spellDefinition }}
+          {{- toYaml $definition | nindent 10 }}
           {{- end }}
-          {{- if not $spellDefinition.addKastDefinitions }}
-          {{- toYaml $spellbook | nindent 10 }}
+          {{- if not $spellDefinition.cleanDefinition }}
+          {{- toYaml $cleanSpellbook | nindent 12 }}
+          {{- toYaml $chapterIndex | nindent 10 }}
           {{- end }}
         {{- end }}
       {{- end }}
@@ -197,11 +216,7 @@ spec:
   ignoreDifferences:
   {{- toYaml $appParams.ignoreDifferences | nindent 4 }}
   {{- end }}
-
-
-
-
-   {{ include "debug" (list $.Values.debug $sources $spellPath ) | nindent 0 }}
+  {{- include "debug" (list $.Values.debug $sources $spellPath ) | nindent 0 }}
   {{- end }}
   {{- end }}
 {{- end }}
