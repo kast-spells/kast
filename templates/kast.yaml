@@ -153,7 +153,8 @@ spec:
           {{- toYaml $definition | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
-          {{- toYaml $cleanSpellbook | nindent 10 }}
+          book:
+          {{- toYaml $cleanSpellbook | nindent 12 }}
           {{- toYaml $chapterIndex | nindent 10 }}
           {{- end }}
     {{- if $spellDefinition.runes }}
