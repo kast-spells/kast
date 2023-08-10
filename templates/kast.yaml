@@ -10,7 +10,6 @@
 {{- end -}}
 {{- end -}}
 
-
 {{- define "configmap" -}}
 ---
 apiVersion: v1
@@ -156,6 +155,9 @@ spec:
       {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
       {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
       helm:
+        parameters: 
+          - name: chart
+            value: {{ $spellDefinition.name }}
         values: |
           glyphs:
           {{- toYaml $spellDefinition.glyphs | nindent 12 }}
