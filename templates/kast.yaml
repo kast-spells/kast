@@ -114,7 +114,7 @@ spec:
   project: {{ default $spellbook.name $spellDefinition.useExistingProject }}
   sources:
   {{- if or $spellDefinition.chart $spellDefinition.path }}
-    - repoURL: {{ $spellbook.defaultSpell.repository }} #usa repo
+    - repoURL: {{ $spellDefinition.repository }} #usa repo
       {{- if $spellDefinition.chart }}
       chart: {{ $spellDefinition.chart }}
       {{- else }}
