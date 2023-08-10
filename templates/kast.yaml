@@ -120,7 +120,7 @@ spec:
       {{- else }}
       path: {{ $spellDefinition.path }}
       {{- end }}
-      targetRevision: {{ $spellbook.defaultSpell.revision }}
+      targetRevision: {{ $spellDefinition.revision }}
       helm:
       {{- if ($spellDefinition.app).skipCrds }}
         skipCrds: true
