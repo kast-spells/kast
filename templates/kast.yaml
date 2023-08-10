@@ -141,7 +141,7 @@ spec:
           {{- toYaml $definition | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
-          {{- toYaml $cleanSpellbook | nindent 12 }}
+          {{- toYaml $cleanSpellbook | nindent 10 }}
           {{- toYaml $chapterIndex | nindent 10 }}
           {{- end }}
     {{- end }}
@@ -195,7 +195,7 @@ spec:
           {{- toYaml $spellDefinition.definition | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
-          {{- toYaml $cleanSpellbook | nindent 12 }}
+          {{- toYaml $cleanSpellbook | nindent 10 }}
           {{- toYaml $chapterIndex | nindent 10 }}
           {{- end }}
         {{- end }}
