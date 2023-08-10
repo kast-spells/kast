@@ -145,7 +145,7 @@ spec:
           {{- toYaml $cleanSpellbook | nindent 12 }}
           {{- toYaml $chapterIndex | nindent 10 }}
           {{- end }}
-
+    {{- end }}
     {{- if and $spellDefinition.glyphs (or $spellDefinition.chart $spellDefinition.path) }}
       #glyphs usamos el summon por q es ademas el q hace los microservicios loq  simplifica el fiutur se puede cambiar en el futuro a una libreria aparte
       #o utilizar varios repositorios con cada uno un glpho y aplicarlos
@@ -187,8 +187,10 @@ spec:
             value: {{ $spellDefinition.name }}
         {{- end}}
         values: |
-          {{- if $spellDefinition }}
-          {{- toYaml $definition | nindent 10 }}
+          {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
+          {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
+          {{- if $spellDefinition.definition }}
+          {{- toYaml $spellDefinition.definition | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
           {{- toYaml $cleanSpellbook | nindent 12 }}
