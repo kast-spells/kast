@@ -44,7 +44,7 @@ data:
   {{- end }}
 {{- end }}
 ##lexicon merge 
-{{- $_ := mergeOverwrite $spellbook (dict "lexicon" $lexicon) }}
+
 {{ include "debug" (list $.Values.debug $spellbook "spellbook" ) }}
 {{include "configmap" (list "lexicon" (dict "lexicon" $lexicon) )}}
 
@@ -143,6 +143,7 @@ spec:
           {{- if not $spellDefinition.cleanDefinition }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
           {{- toYaml $chapterIndex | nindent 10 }}
+          {{- toYaml $lexicon | nindent 10 }}
           {{- end }}
     {{- end }}
     {{- if and $spellDefinition.glyphs (or $spellDefinition.chart $spellDefinition.path) }}
@@ -165,6 +166,7 @@ spec:
           {{- toYaml $spellDefinition.glyphs | nindent 12 }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
           {{- toYaml $chapterIndex | nindent 10 }}
+          {{- toYaml $lexicon | nindent 10 }}
     {{- end }}
     {{- if $spellDefinition.runes }}
     {{- range $rune := $spellDefinition.runes }}
@@ -199,6 +201,7 @@ spec:
           {{- if not $spellDefinition.cleanDefinition }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
           {{- toYaml $chapterIndex | nindent 10 }}
+          {{- toYaml $lexicon | nindent 10 }}
           {{- end }}
         {{- end }}
       {{- end }}
