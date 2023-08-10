@@ -17,7 +17,7 @@ kind: ConfigMap
 metadata:
   name: {{ index . 0 }}
 data:
-  spellbook:
+  spellbook: |
     {{- toYaml (index . 1) | nindent 4 }}
 {{- end -}}
 
