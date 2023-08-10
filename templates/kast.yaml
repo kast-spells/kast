@@ -158,6 +158,8 @@ spec:
         parameters: 
           - name: chart
             value: {{ $spellDefinition.name }}
+          - name: name
+            value: {{ $spellDefinition.name }}
         values: |
           glyphs:
           {{- toYaml $spellDefinition.glyphs | nindent 12 }}
