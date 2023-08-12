@@ -47,10 +47,10 @@ data:
 ##lexicon merge 
 
 {{ include "debug" (list $.Values.debug $spellbook "spellbook" ) }}
-{{include "configmap" (list "lexicon" (dict "lexicon" $lexicon) )}}
+{{ include "configmap" (list "lexicon" (dict "lexicon" $lexicon) )}}
 
 {{ range $chapterName := $spellbook.chapters }}
-  {{- $chapterIndex := dict }}
+  {{- $chapterIndex := dict "name" $chapterName }}
   {{- $path := print "library/" $spellbook.name "/" $chapterName "/index.yaml" }}
   {{- if $.Files.Glob $path }}
     {{- $chapterIndex = $.Files.Get $path | fromYaml }}
@@ -138,7 +138,7 @@ spec:
       {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
       {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
         values: |
-          {{- if $spellDefinition }}
+          {{- if $definition }}
           {{- toYaml $definition | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
