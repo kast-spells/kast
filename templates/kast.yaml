@@ -204,8 +204,8 @@ spec:
         values: |
           {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
           {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
-          {{- if $spellDefinition.definition }}
-          {{- toYaml $spellDefinition.definition | nindent 10 }}
+          {{- if $rune.definition }}
+          {{- toYaml $rune.definition | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
