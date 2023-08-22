@@ -8,7 +8,7 @@
 {{- $_ := "" }}
 
 
-{{- $path := printf "spellbook/%s/index.yaml" .Values.name }}
+{{- $path := printf "library/%s/index.yaml" .Values.name }}
 {{- if .Files.Glob $path }}
   {{- $default := .Files.Get $path | fromYaml }}
   {{- $_ := merge $default (dict "name" $.Values.name ) }}
@@ -18,12 +18,12 @@
 ##annex definition
 {{- $annexDefinition := dict }}
 {{- $annex := dict }}
-{{- $path := print "spellbook/" $spellbook.book.name "/annex/*.y*ml"}}
+{{- $path := print "library/" $spellbook.book.name "/annex/*.y*ml"}}
 {{- range $annexPath, $_ := .Files.Glob $path }}
   {{- $annexDefinition = $.Files.Get $annexPath | fromYaml }}
   {{- $annex := mustMerge $annex $annexDefinition  }}
 {{- end }}
-{{- $path := print "spellbook/" $spellbook.book.name "/annex/*.y*ml"}}
+{{- $path := print "library/" $spellbook.book.name "/annex/*.y*ml"}}
 {{- $annex := list }}
 {{- range $annexPath, $_ := .Files.Glob $path }}
   {{- $annexDefinitions := ($.Files.Get $annexPath | fromYaml).annex }}
@@ -37,14 +37,14 @@
 # range of chapters
 {{- range $chapterName := $spellbook.book.chapters }}
   {{- $chapter := dict "name" $chapterName }}
-  {{- $path := print "spellbook/" $spellbook.book.name "/" $chapterName "/index.yaml" }}
+  {{- $path := print "library/" $spellbook.book.name "/" $chapterName "/index.yaml" }}
   {{- if $.Files.Glob $path }}
     {{- $chapter := .Files.Get $path | fromYaml }}
   {{- end }}  
   {{- $spellbook := mergeOverwrite $spellbook (dict "chapter" $chapter) }}
 
 # range of spells
-  {{- $path := print "spellbook/" $spellbook.book.name "/" $chapterName "/*.y*ml"}}
+  {{- $path := print "library/" $spellbook.book.name "/" $chapterName "/*.y*ml"}}
   {{- range $spellPath, $_ := $.Files.Glob $path }}
     {{- $stack := dict }}
     {{- $appParams := dict }}
