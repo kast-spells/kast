@@ -50,10 +50,10 @@ data:
 {{ include "configmap" (list "lexicon" (dict "lexicon" $lexicon) )}}
 
 {{ range $chapterName := $spellbook.chapters }}
-  {{- $chapterIndex := dict "name" $chapterName }}
+  {{- $chapterIndex := dict "chapter" (dict "name" $chapterName) }}
   {{- $path := print "library/" $spellbook.name "/" $chapterName "/index.yaml" }}
   {{- if $.Files.Glob $path }}
-    {{- $chapterIndex = $.Files.Get $path | fromYaml }}
+    {{- $chapterIndex = dict "chapter" ($.Files.Get $path | fromYaml) }}
   {{- end }}
   {{- $path := print "library/" $spellbook.name "/" $chapterName "/*.y*ml"}}
   {{- range $spellPath, $_ := $.Files.Glob $path }}
