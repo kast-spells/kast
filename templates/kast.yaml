@@ -10,6 +10,8 @@
 {{- end -}}
 {{- end -}}
 
+{{- $debug := ""}}
+
 {{- define "configmap" -}}
 ---
 apiVersion: v1
@@ -32,7 +34,7 @@ data:
   {{- $_ := mergeOverwrite $spellbook $default }}
 {{- end }}
 
-{{ include "debug" (list $.Values.debug $spellbook "spellbook" ) }}
+{{ include "debug" (list $debug $spellbook "spellbook" ) }}
 
 ##lexicon definition must be from a config map in some place
 {{- $lexiconDefinition := dict }}
@@ -46,7 +48,7 @@ data:
 {{- end }}
 ##lexicon merge 
 
-{{ include "debug" (list $.Values.debug $spellbook "spellbook" ) }}
+{{ include "debug" (list $debug $spellbook "spellbook" ) }}
 {{ include "configmap" (list "lexicon" (dict "lexicon" $lexicon) )}}
 
 {{ range $chapterName := $spellbook.chapters }}
@@ -222,7 +224,7 @@ spec:
   ignoreDifferences:
   {{- toYaml $appParams.ignoreDifferences | nindent 4 }}
   {{- end }}
-  {{- include "debug" (list $.Values.debug $sources $spellPath ) | nindent 0 }}
+  {{- include "debug" (list $debug $sources $spellPath ) | nindent 0 }}
   {{- end }}
   {{- end }}
 {{- end }}
