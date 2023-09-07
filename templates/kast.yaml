@@ -183,13 +183,13 @@ spec:
       {{- if not $rune.name }}
         {{- $_ := merge $rune (dict "name" (printf "%s-rune" $spellDefinition.name))  }}
       {{- end }}
-    - repoURL: {{ $rune.repository }}
+    - repoURL: {{ default $spellbook.defaultSpell.repository $rune.repository }}
       {{- if $rune.chart }}
       chart: {{ $rune.chart }}
         {{- else }}
-      path: {{ $rune.path }}
+      path: {{ default $spellbook.defaultSpell.path $rune.path }}
         {{- end }}
-      targetRevision: {{  $rune.revision }}
+      targetRevision: {{ default $spellbook.defaultSpell.revision $rune.revision }}
       helm:
         {{- if $rune.skipCrds }}
         skipCrds: true
