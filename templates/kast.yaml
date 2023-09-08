@@ -160,6 +160,7 @@ spec:
       {{- $glyphs := $spellDefinition.glyphs }}
       {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
       {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
+      {{- $_ =  unset $cleanSpellbook.spellbook "defaultSpell" }}
       helm:
         parameters: 
         {{- if or $spellDefinition.chart $spellDefinition.path }}
