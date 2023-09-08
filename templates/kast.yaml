@@ -170,7 +170,7 @@ spec:
         {{- if or $spellDefinition.chart $spellDefinition.path }}
           {{- $definition = dict "glyphs" $spellDefinition.glyphs }}
         {{- else }}  
-          {{- $definition = merge (default dict (deepCopy $spellbook.defaultSpell.definition) ) $spellDefinition }}
+          {{- $definition = mergeOverwrite (default dict (deepCopy $spellbook.defaultSpell.definition) ) $spellDefinition }}
           {{- $_ =  unset $definition "runes" }}
         {{- end }}
         values: |
