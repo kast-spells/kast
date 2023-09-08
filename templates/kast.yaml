@@ -174,6 +174,7 @@ spec:
         {{- else }}  
           {{- $definition = mergeOverwrite (default dict (deepCopy $spellbook.defaultSpell.definition) ) $spellDefinition }}
           {{- $_ =  unset $definition "runes" }}
+          {{- $_ =  unset $definition "appParams" }}
         {{- end }}
         values: |
           {{- toYaml $definition | nindent 10 }}
