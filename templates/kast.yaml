@@ -139,7 +139,9 @@ spec:
       {{- end }}
       {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
       {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
+      {{- $_ =  unset $cleanSpellbook.spellbook "defaultSpell" }}
         values: |
+        
           {{- if $definition }}
           {{- toYaml $definition | nindent 10 }}
           {{- end }}
