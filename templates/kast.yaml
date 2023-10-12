@@ -151,6 +151,7 @@ spec:
           {{- toYaml $lexicon | nindent 12 }}
           {{- end }}
   {{- end }}
+
     {{- if $spellDefinition.runes }}
     {{- range $rune := $spellDefinition.runes }}
     {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
@@ -189,37 +190,6 @@ spec:
           {{- end }}
         {{- end }}
       {{- end }}
-      #glyphs usamos el summon por q es ademas el q hace los microservicios loq  simplifica el se puede cambiar en el futuro a una libreria aparte
-      #o utilizar varios repositorios con cada uno un glyph y aplicarlos
-    - repoURL: {{ $spellbook.defaultSpell.repository }} #usa summon
-      path: {{ $spellbook.defaultSpell.path }}
-      targetRevision: {{ $spellbook.defaultSpell.revision }}
-      {{- $glyphs := $spellDefinition.glyphs }}
-      {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
-      {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
-      {{- $_ =  unset $cleanSpellbook.spellbook "defaultSpell" }}
-      helm:
-        parameters: 
-        {{- if or $spellDefinition.chart $spellDefinition.path }}
-          - name: chart
-            value: {{ $spellDefinition.name }}
-        {{- end }}
-          - name: name
-            value: {{ $spellDefinition.name }}
-        {{- $definition := "" }}
-        {{- if or $spellDefinition.chart $spellDefinition.path }}
-          {{- $definition = dict "glyphs" $spellDefinition.glyphs }}
-        {{- else }}  
-          {{- $definition = mergeOverwrite (default dict (deepCopy $spellbook.defaultSpell.definition) ) $spellDefinition }}
-          {{- $_ =  unset $definition "runes" }}
-          {{- $_ =  unset $definition "appParams" }}
-        {{- end }}
-        values: |
-          {{- toYaml $definition | nindent 10 }}
-          {{- toYaml $cleanSpellbook | nindent 10 }}
-          {{- toYaml $chapterIndex | nindent 10 }}
-          lexicon:
-          {{- toYaml $lexicon | nindent 12 }}
   destination:
     server: "https://kubernetes.default.svc"
     namespace: {{ if $spellDefinition.namespace }}{{ $spellDefinition.namespace }}{{ else }}{{ default $spellDefinition.name $spellDefinition.namespace }}{{ end }}
