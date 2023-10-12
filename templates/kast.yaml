@@ -200,7 +200,7 @@ spec:
         {{- if $rune.skipCrds }}
         skipCrds: true
         {{- end }}
-        {{- if not $rune.addKastDefinitions }}
+        {{- if not $spellDefinition.cleanDefinition }}
         parameters:
           - name: name
             value: {{ $rune.name }}
