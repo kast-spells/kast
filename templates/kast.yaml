@@ -123,7 +123,7 @@ spec:
       path: {{ $spellDefinition.path }}
       {{- end }}
       targetRevision: {{ $spellDefinition.revision }}
-    {{ if $spellDefinition.noHelm }}
+    {{ if not $spellDefinition.noHelm }}
       helm:
       {{- if ($spellDefinition.app).skipCrds }}
         skipCrds: true
@@ -197,7 +197,7 @@ spec:
       path: {{ default $spellbook.defaultSpell.path $rune.path }}
       {{- end }}
       targetRevision: {{ default $spellbook.defaultSpell.revision $rune.revision }}
-    {{ if $rune.noHelm }}
+    {{ if not $rune.noHelm }}
       helm:
         {{- if $rune.skipCrds }}
         skipCrds: true
