@@ -123,6 +123,7 @@ spec:
       path: {{ $spellDefinition.path }}
       {{- end }}
       targetRevision: {{ $spellDefinition.revision }}
+    {{ if $spellDefinition.noHelm }}
       helm:
       {{- if ($spellDefinition.app).skipCrds }}
         skipCrds: true
@@ -150,6 +151,7 @@ spec:
           lexicon:
           {{- toYaml $lexicon | nindent 12 }}
           {{- end }}
+    {{- end }}
   {{- end }}
       #glyphs usamos el summon por q es ademas el q hace los microservicios loq  simplifica el se puede cambiar en el futuro a una libreria aparte
       #o utilizar varios repositorios con cada uno un glyph y aplicarlos
@@ -193,8 +195,9 @@ spec:
       chart: {{ $rune.chart }}
         {{- else }}
       path: {{ default $spellbook.defaultSpell.path $rune.path }}
-        {{- end }}
+      {{- end }}
       targetRevision: {{ default $spellbook.defaultSpell.revision $rune.revision }}
+    {{ if $rune.noHelm }}
       helm:
         {{- if $rune.skipCrds }}
         skipCrds: true
@@ -218,6 +221,7 @@ spec:
           lexicon:
           {{- toYaml $lexicon | nindent 12 }}
           {{- end }}
+      {{- end }}
         {{- end }}
       {{- end }}
   destination:
