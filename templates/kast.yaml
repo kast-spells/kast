@@ -155,6 +155,7 @@ spec:
   {{- end }}
       #glyphs usamos el summon por q es ademas el q hace los microservicios loq  simplifica el se puede cambiar en el futuro a una libreria aparte
       #o utilizar varios repositorios con cada uno un glyph y aplicarlos
+    {{- if $spellbook.defaultSpell }}
     - repoURL: {{ $spellbook.defaultSpell.repository }} #usa summon
       path: {{ $spellbook.defaultSpell.path }}
       targetRevision: {{ $spellbook.defaultSpell.revision }}
@@ -184,6 +185,7 @@ spec:
           {{- toYaml $chapterIndex | nindent 10 }}
           lexicon:
           {{- toYaml $lexicon | nindent 12 }}
+    {{- end }}
     {{- if $spellDefinition.runes }}
     {{- range $rune := $spellDefinition.runes }}
     {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
