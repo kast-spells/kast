@@ -6,7 +6,7 @@ Using Kast:
 2) create the library directory, here will be stored each of your spellbooks
 3) create a directory for a spellbook with its name in the folder
 4) create any number of directories inside the spellbook, each one of this will be your chapters
-5) create an index.yaml file inside the spellbook directory and add a yaml fallowing this example
+5) create an index.yaml file inside the spellbook directory and add a yaml following this example
 ```yaml
 name: spellbookName #the name of the main spellbook folder
 chapters:
