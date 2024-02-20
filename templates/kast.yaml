@@ -84,11 +84,11 @@ kind: Application
 metadata:
   name: {{ $spellDefinition.name }}
   namespace: {{ default "argocd" $spellbook.argocdNamespace }}
-  {{- with ($spellDefinition.app).customFinalizers }}
+  {{- with ($spellDefinition.appParams).customFinalizers }}
   finalizers:
   {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with ($spellDefinition.app).annotations }}
+  {{- with ($spellDefinition.appParams).annotations }}
   annotations:
   {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -114,7 +114,7 @@ spec:
     retry:
     {{- toYaml . | nindent 6 }}
     {{- end }}  
-  project: {{ default $spellbook.name $spellDefinition.useExistingProject }}
+  project: {{ default $spellbook.name (default (default $chapterIndex.chapter.projectName $spellbook.projectName ) $spellDefinition.projectName) }}
   sources:
   {{- if or $spellDefinition.chart $spellDefinition.path }}
     - repoURL: {{ $spellDefinition.repository }} #usa repo
@@ -126,7 +126,7 @@ spec:
       targetRevision: {{ $spellDefinition.revision }}
     {{ if not $spellDefinition.noHelm }}
       helm:
-      {{- if ($spellDefinition.app).skipCrds }}
+      {{- if ($spellDefinition.appParams).skipCrds }}
         skipCrds: true
       {{- end }}
       {{- if not $spellDefinition.cleanDefinition }}
@@ -193,7 +193,7 @@ spec:
       {{- if not $rune.name }}
         {{- $_ := merge $rune (dict "name" (printf "%s-rune" $spellDefinition.name))  }}
       {{- end }}
-    - repoURL: {{ default $spellbook.defaultSpell.repository $rune.repository }}
+    - repoURL: {{ default $rune.repository }}
       {{- if $rune.chart }}
       chart: {{ $rune.chart }}
         {{- else }}

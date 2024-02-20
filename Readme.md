@@ -1,3 +1,20 @@
+Using Kast:
+1) in a git repository that will be used to store the spellbooks:
+
+`git submodule add https://github.com/kast-spells/kast.git kast`
+
+2) create the library directory, here will be stored each of your spellbooks
+3) create a directory for a spellbook with its name in the folder
+4) create any number of directories inside the spellbook, each one of this will be your chapters
+5) create an index.yaml file inside the spellbook directory and add a yaml fallowing this example
+```yaml
+name: spellbookName #the name of the main spellbook folder
+chapters:
+  - chapterName #the name of the folders inside the spellbook
+```
+6) inside your chapters create your spells. this is an example to install argocd
+
+
 ```yaml
 name: argocd #application name
 repository: https://github.com/argoproj/argo-helm.git #tanto como para git como para helm
@@ -49,14 +66,18 @@ appParams:
         duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
         factor: 2 # a factor to multiply the base duration after each failed retry
         maxDuration: 3m # the maximum amount of time allowed for the backoff strategy
-useExistingProject: default # optional by default uses the spellbok name
-cleanDefinition: true # default is false. if true will remove any custom data added to the value conten of the helm for using in case of hard defined helm charts
-app: #deberia exisitir dentro de app params 
   annotations: #argocd app annotations
     enviroment: prod
   customFinalaizers: []
   skipCrds: true # helm/argocd parameter
 
+useExistingProject: default # optional by default uses the spellbok name
+cleanDefinition: true # default is false. if true will remove any custom data added to the value conten of the helm for using in case of hard defined helm charts
+
+clusterSelector:
+  environment: prod #needs a k8s-cluster definition in the lexicon to be used
+projectDisabled: true #will disable the creation of the project
+projectName: "" #if defined will override the spellbook name can be combined with projectDisabled
 runes: #esto permite dentro de una sola argo app instalar varios repos dfe helm o no se puede usar para dependencias o plugins de cosas ej istio como todo un set
   - repository: https://github.com/otro/repo.git
     path: cosa # en el caso de ser un helm repo usar chart: nombre del chart
@@ -64,6 +85,28 @@ runes: #esto permite dentro de una sola argo app instalar varios repos dfe helm 
     definition: # y sus values
 
 ```
+## Using Chapters and herency: 
+
+inside each chapter folder you can create a new index.yaml file the content of this can have any configuration and it will be added or overwrite any spellbook definition
+
+the herency is from bigger to small when the smaller is always the more important one
+
+
+## Lexicon:
+the lexicon is a compilation of infrastructure or resources that can be consumed by a book.
+the only ifrastructure needed for kast as an appOfApps is the clusters where the apps will be instaled
+each cluster defined in the lexicon need to be added to the argocd where the spellbook will be used
+```yaml
+lexicon:
+  - name: jorge
+    type: k8s-cluster
+    labels:
+      environment: dev
+    clusterURL: https://jorge.clusters.api
+```
+when used with a `clusterSelector` in any index or spell file will match all the labels in the selector with the ones in the lexicon if no cluster is selected will defautl to the local cluster
+
+
 
 ## License
 
