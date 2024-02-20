@@ -12,8 +12,34 @@ name: spellbookName #the name of the main spellbook folder
 chapters:
   - chapterName #the name of the folders inside the spellbook
 ```
-6) inside your chapters create your spells. this is an example to install argocd
+6) inside your chapters create your spell files. lower is an example of values to install argocd
+7) commit your changes
+8) create an argocd application to start the process
+```yaml
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: spellbookName
+  namespace: argocd
+spec:
+  project: default # if u change the project remember to create it before
+  source:
+    repoURL: git@github.com:Project/repo.git
+    targetRevision: master
+    path: kast # this will be the submodule path u create 
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    retry:
+      limit: 2
+    syncOptions:
+      - CreateNamespace=true
+```
+9) (optional) y can create a spell file with the definition to your kast installation so u can administrate ur kast from kast
 
+## Example Values
 
 ```yaml
 name: argocd #application name
