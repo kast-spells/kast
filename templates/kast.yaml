@@ -23,6 +23,12 @@ data:
     {{- toYaml (index . 1) | nindent 4 }}
 {{- end -}}
 
+
+
+
+
+
+
 {{- $spellbook :=  dict "appParams" $.Values.appParams  }}
 
 #se puede agregar un if aca para q si no este definido el libro haga un "ls" y ver q libros hay y haga de multibook on one sweep
@@ -53,9 +59,9 @@ data:
 
 {{ range $chapterName := $spellbook.chapters }}
   {{- $chapterIndex := dict "chapter" (dict "name" $chapterName) }}
-  {{- $path := print "library/" $spellbook.name "/" $chapterName "/index.yaml" }}
-  {{- if $.Files.Glob $path }}
-    {{- $chapterIndex = dict "chapter" ($.Files.Get $path | fromYaml) }}
+  {{- $pathChapter := print "library/" $spellbook.name "/" $chapterName "/index.yaml" }}
+  {{- if $.Files.Glob $pathChapter }}
+    {{- $chapterIndex = dict "chapter" ($.Files.Get $pathChapter | fromYaml) }}
   {{- end }}
   {{- $path := print "library/" $spellbook.name "/" $chapterName "/*.y*ml"}}
   {{- range $spellPath, $_ := $.Files.Glob $path }}
@@ -63,8 +69,8 @@ data:
     {{- $sources := list }}
     {{- $appParams := deepCopy $spellbook.appParams }} 
     {{- $spellDefinition := ($.Files.Get $spellPath | fromYaml) }}
-    {{- $_ := mergeOverwrite $appParams (default dict ($chapterIndex.appParams)) }}
-    {{- $_ := mergeOverwrite $appParams (deepCopy (default dict ($spellDefinition.appParams ))) }}
+    {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $chapterIndex.chapter.appParams) ) }}
+    {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $spellDefinition.appParams )) }}
     {{- $spell := (dict "name" $spellDefinition.name ) }}
     {{- if $spellDefinition.runes }}
       {{- range $rune := $spellDefinition.runes }}
@@ -72,11 +78,6 @@ data:
         {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
       {{- end }}
     {{- end }}
-
-
-
-
-
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -196,15 +197,15 @@ spec:
       {{- if $rune.chart }}
       chart: {{ $rune.chart }}
         {{- else }}
-      path: {{ default $spellbook.defaultSpell.path $rune.path }}
+      path: {{ $rune.path }}
       {{- end }}
-      targetRevision: {{ default $spellbook.defaultSpell.revision $rune.revision }}
-    {{ if not $rune.noHelm }}
+      targetRevision: {{ $rune.revision }}
+    {{- if not $rune.noHelm }}
       helm:
         {{- if $rune.skipCrds }}
         skipCrds: true
         {{- end }}
-        {{- if not $spellDefinition.cleanDefinition }}
+        {{- if not $rune.cleanDefinition }}
         parameters:
           - name: name
             value: {{ $rune.name }}
@@ -212,12 +213,12 @@ spec:
             value: {{ $spellDefinition.name }}
         {{- end}}
         values: |
-          {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
-          {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
           {{- if $rune.definition }}
           {{- toYaml $rune.definition | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
+          {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
+          {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
           {{- toYaml $chapterIndex | nindent 10 }}
           lexicon:
@@ -227,8 +228,16 @@ spec:
         {{- end }}
       {{- end }}
   destination:
-    server: "https://kubernetes.default.svc"
-    namespace: {{ if $spellDefinition.namespace }}{{ $spellDefinition.namespace }}{{ else }}{{ default $spellDefinition.name $spellDefinition.namespace }}{{ end }}
+    {{- $cluster := "" }}
+    {{- $clusterSelector := default (default $spellbook.clusterSelector $chapterIndex.chapter.clusterSelector ) $spellDefinition.clusterSelector }}
+    {{- if $clusterSelector }}
+    {{- $clusters := get (include "glyph.runicIndexer" (list $lexicon $clusterSelector "k8s-cluster" $chapterIndex.name ) | fromJson) "results" }}
+    {{- range $clusters }}
+    {{- $cluster = .clusterURL}}
+    {{- end }}
+    {{- end }}
+    server: {{ default "https://kubernetes.default.svc" $cluster }}
+    namespace: {{ default $spellDefinition.name $spellDefinition.namespace }}
   {{- if ($appParams).ignoreDifferences }}
   ignoreDifferences:
   {{- toYaml $appParams.ignoreDifferences | nindent 4 }}
