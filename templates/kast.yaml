@@ -156,10 +156,11 @@ spec:
   {{- end }}
       #glyphs usamos el summon por q es ademas el q hace los microservicios loq  simplifica el se puede cambiar en el futuro a una libreria aparte
       #o utilizar varios repositorios con cada uno un glyph y aplicarlos
-    {{- if $spellbook.defaultSpell }}
-    - repoURL: {{ $spellbook.defaultSpell.repository }} #usa summon
-      path: {{ $spellbook.defaultSpell.path }}
-      targetRevision: {{ $spellbook.defaultSpell.revision }}
+    {{- $defaultSpell := default $spellbook.defaultSpell $chapterIndex.chapter.defaultSpell}}
+    {{- if $defaultSpell }}
+    - repoURL: {{ $defaultSpell.repository }} #usa summon
+      path: {{ $defaultSpell.path }}
+      targetRevision: {{ $defaultSpell.revision }}
       {{- $glyphs := $spellDefinition.glyphs }}
       {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
       {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
@@ -176,7 +177,7 @@ spec:
         {{- if or $spellDefinition.chart $spellDefinition.path }}
           {{- $definition = dict "glyphs" $spellDefinition.glyphs }}
         {{- else }}  
-          {{- $definition = mergeOverwrite (default dict (deepCopy $spellbook.defaultSpell.definition) ) $spellDefinition }}
+          {{- $definition = mergeOverwrite (default dict (deepCopy $defaultSpell.definition) ) $spellDefinition }}
           {{- $_ =  unset $definition "runes" }}
           {{- $_ =  unset $definition "appParams" }}
         {{- end }}
