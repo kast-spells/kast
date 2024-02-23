@@ -156,7 +156,7 @@ spec:
   {{- end }}
       #glyphs usamos el summon por q es ademas el q hace los microservicios loq  simplifica el se puede cambiar en el futuro a una libreria aparte
       #o utilizar varios repositorios con cada uno un glyph y aplicarlos
-    {{- $defaultSpell := default $spellbook.defaultSpell $chapterIndex.defaultSpell}}
+    {{- $defaultSpell := default $spellbook.defaultSpell $chapterIndex.chapter.defaultSpell}}
     {{- if $defaultSpell }}
     - repoURL: {{ $defaultSpell.repository }} #usa summon
       path: {{ $defaultSpell.path }}
