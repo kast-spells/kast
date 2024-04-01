@@ -1,0 +1,64 @@
+{{- $spellbook :=  dict "appParams" $.Values.appParams  }}
+
+{{- $path := printf "library/%s/index.yaml" .Values.name }}
+{{- if .Files.Glob $path }}
+  {{- $default := .Files.Get $path | fromYaml }}
+  {{- $_ := merge $default (dict "name" $.Values.name ) }}
+  {{- $_ := merge $spellbook $default }}
+{{- end }}
+
+{{- range $chapterName := $spellbook.chapters }}
+  {{- $chapter := dict "name" $chapterName }}
+  {{- $pathChapter := print "library/" $spellbook.name "/" $chapterName "/index.yaml" }}
+  {{- if $.Files.Glob $pathChapter }}
+    {{- $chapter = $.Files.Get $pathChapter | fromYaml }}
+  {{- end }}
+  {{- $path := print "library/" $spellbook.name "/" $chapterName "/*.y*ml"}}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ $chapterName }}
+  namespace: {{ default "argocd" $spellbook.argocdNamespace }}
+spec:
+  generators:
+  - list:
+      elements:
+      {{- range $spellPath, $_ := $.Files.Glob $path }}
+        {{- if not (eq $spellPath (print "library/" $spellbook.name "/" $chapterName "/index.yaml")) }}
+          {{- $sources := list }}
+          {{- $appParams := deepCopy $spellbook.appParams }} 
+          {{- $spellDefinition := ($.Files.Get $spellPath | fromYaml) }}
+          {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $chapter.appParams) ) }}
+          {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $spellDefinition.appParams )) }}
+          {{- $spell := (dict "name" $spellDefinition.name ) }}
+          {{- if $spellDefinition.runes }}
+            {{- range $rune := $spellDefinition.runes }}
+              {{- $sources = append $sources $rune }}
+              {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
+            {{- end }}
+          {{- end }}
+        - repository: {{ default (default $spellbook.defaultSpell.repository ($chapter.defaultSpell).repository ) $spellDefinition.repository }}
+          {{- if (default (default $spellbook.defaultSpell.chart ($chapter.defaultSpell).chart ) $spellDefinition.chart) }}
+          chart: {{ default (default $spellbook.defaultSpell.chart ($chapter.defaultSpell).chart ) $spellDefinition.chart }}
+          {{- else }}
+          path: {{ default (default $spellbook.defaultSpell.path ($chapter.defaultSpell).path ) $spellDefinition.path }}
+          project: {{ default $spellbook.name (default (default $chapter.projectName $spellbook.projectName ) $spellDefinition.projectName) }}
+          appParams: {{ $appParams }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+  template:
+    metadata:
+      name: {{`'{{ .name }}'`}}
+    spec:
+      project: {{`'{{ .project }}'`}}
+      sources:
+        - repoURL: {{`'{{ .repository }}'`}}
+          targetRevision: {{`'{{ dig "clusters" .name "chartRevision" .source.targetRevision . }}'`}}
+          chart: {{`'{{ default "" .chart }}'`}}
+          path: {{ `'{{ default "" .path }}'` }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: {{`'{{ default .name .namespace }}'`}}
+{{- end }}
