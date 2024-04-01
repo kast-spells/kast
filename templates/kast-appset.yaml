@@ -78,7 +78,7 @@ spec:
           path: {{ `'{{ default "" .path }}'` }}
           helm:
             values: | 
-              {{ `'{{ default "" .values }}'` }}
+              {{ `'{{ default "" .values | fromYaml | toYaml | nindent 16 }}'` }}
       destination:
         server: https://kubernetes.default.svc
         namespace: {{`'{{ default .name .namespace }}'`}}
