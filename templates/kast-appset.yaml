@@ -55,11 +55,11 @@ spec:
     spec:
       project: {{`'{{ .project }}'`}}
       sources:
-        - repoURL: {{`'{{ repository }}'`}}
-          targetRevision: {{`'{{ revision }}'`}}
-          chart: {{`'{{ default "" chart }}'`}}
-          path: {{ `'{{ default "" path }}'` }}
+        - repoURL: {{`'{{ .repository }}'`}}
+          targetRevision: {{`'{{ .revision }}'`}}
+          chart: {{`'{{ default "" .chart }}'`}}
+          path: {{ `'{{ default "" .path }}'` }}
       destination:
         server: https://kubernetes.default.svc
-        namespace: {{`'{{ default name namespace }}'`}}
+        namespace: {{`'{{ default .name .namespace }}'`}}
 {{- end }}
