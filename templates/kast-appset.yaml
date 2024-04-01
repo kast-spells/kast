@@ -52,7 +52,7 @@ spec:
       {{- end }}
   template:
     metadata:
-      name: {{`'{{ .name }}'`}}
+      name: {{`'{{ .name }}-develop'`}}
     spec:
       project: {{`'{{ .project }}'`}}
       sources:
