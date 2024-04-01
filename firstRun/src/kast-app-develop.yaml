@@ -1,0 +1,21 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fwck-develop
+  namespace: argocd
+spec:
+  project: fwck
+  source:
+    repoURL: git@github.com:kast-spells/spellbooks-library.git
+    targetRevision: develop
+    path: kast
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    retry:
+      limit: 2
+    syncOptions:
+      - CreateNamespace=true
+      
