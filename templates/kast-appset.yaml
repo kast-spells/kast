@@ -39,7 +39,8 @@ spec:
               {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
             {{- end }}
           {{- end }}
-        - repository: {{ default (default $spellbook.defaultSpell.repository ($chapter.defaultSpell).repository ) $spellDefinition.repository }}
+        - name: {{ print (default "" $spellbook.namePrefix) "-" (default "" $chapter.namePrefix) "-" $spellDefinition.name "-" (default "" $spellbook.nameSuffix) "-" (default "" $chapter.nameSuffix) | replace "--" "-" | trimSuffix "-" | trimPrefix "-" }}
+          repository: {{ default (default $spellbook.defaultSpell.repository ($chapter.defaultSpell).repository ) $spellDefinition.repository }}
           {{- if (default (default $spellbook.defaultSpell.chart ($chapter.defaultSpell).chart ) $spellDefinition.chart) }}
           chart: {{ default (default $spellbook.defaultSpell.chart ($chapter.defaultSpell).chart ) $spellDefinition.chart }}
           {{- else }}
@@ -47,7 +48,22 @@ spec:
           {{- end }}
           project: {{ default $spellbook.name (default (default $chapter.projectName $spellbook.projectName ) $spellDefinition.projectName) }}
           revision: {{ default (default $spellbook.defaultSpell.revision ($chapter.defaultSpell).revision ) $spellDefinition.revision }}
-          name: {{ print (default "" $spellbook.namePrefix) "-" (default "" $chapter.namePrefix) "-" $spellDefinition.name "-" (default "" $spellbook.nameSuffix) "-" (default "" $chapter.nameSuffix) | replace "--" "-" | trimSuffix "-" | trimPrefix "-" }}
+          {{- $definition := "" }}
+          {{- if or $spellDefinition.chart $spellDefinition.path }}
+          {{- $definition = $spellDefinition.definition }}
+          {{- $_ =  unset $definition "runes" }}
+          {{- end }}
+          {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
+          {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
+          {{- $_ =  unset $cleanSpellbook.spellbook "defaultSpell" }}
+          values: |
+            {{- if $definition }}
+            {{- toYaml $definition | nindent 14 }}
+            {{- end }}
+            {{- if not $spellDefinition.cleanDefinition }}
+            {{- toYaml $cleanSpellbook | nindent 14 }}
+            {{- toYaml $chapter | nindent 14 }}
+            {{- end }}
         {{- end }}
       {{- end }}
   template:
@@ -60,6 +76,8 @@ spec:
           targetRevision: {{`'{{ .revision }}'`}}
           chart: {{`'{{ default "" .chart }}'`}}
           path: {{ `'{{ default "" .path }}'` }}
+          helm:
+            values: | 
       destination:
         server: https://kubernetes.default.svc
         namespace: {{`'{{ default .name .namespace }}'`}}
