@@ -44,6 +44,7 @@ spec:
           chart: {{ default (default $spellbook.defaultSpell.chart ($chapter.defaultSpell).chart ) $spellDefinition.chart }}
           {{- else }}
           path: {{ default (default $spellbook.defaultSpell.path ($chapter.defaultSpell).path ) $spellDefinition.path }}
+          {{- end }}
           project: {{ default $spellbook.name (default (default $chapter.projectName $spellbook.projectName ) $spellDefinition.projectName) }}
           revision: {{ default (default $spellbook.defaultSpell.revision ($chapter.defaultSpell).revision ) $spellDefinition.revision }}
           name: {{ print (default "" $spellbook.namePrefix) "-" (default "" $chapter.namePrefix) "-" $spellDefinition.name "-" (default "" $spellbook.nameSuffix) "-" (default "" $chapter.nameSuffix) | replace "--" "-" | trimSuffix "-" | trimPrefix "-" }}
