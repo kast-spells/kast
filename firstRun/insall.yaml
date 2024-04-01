@@ -3,7 +3,6 @@
   hosts: localhost
   vars:
     git_ssh_key: "{{ lookup('file', '/home/namen/.ssh/id_rsa') }}"
-    helm_values_file: "../library/hildy/ishtar/argocd.yaml"
   tasks:
     # - name: Install community.kubernetes collection
     #   ansible.builtin.package:
@@ -11,40 +10,40 @@
     #     tate: present
 
 
-    - name: Load Helm values from file
-      include_vars:
-        file: "{{ helm_values_file }}"
-        name: helm_values
+    # - name: Load Helm values from file
+    #   include_vars:
+    #     file: "{{ helm_values_file }}"
+    #     name: helm_values
 
-    - name: Clone Git repository with SSH key for a specific version
-      git:
-        repo: "{{ helm_values.repository }}"
-        dest: /tmp/helm-chart-repo
-        version: "{{ helm_values.revision }}"
-        accept_hostkey: yes
-        key_file: "{{ git_ssh_key }}"
-        update: no
+    # - name: Clone Git repository with SSH key for a specific version
+    #   git:
+    #     repo: "{{ helm_values.repository }}"
+    #     dest: /tmp/helm-chart-repo
+    #     version: "{{ helm_values.revision }}"
+    #     accept_hostkey: yes
+    #     key_file: "{{ git_ssh_key }}"
+    #     update: no
 
-    # - name: Run helm dependency build
-    #   community.kubernetes.core.helm_dependency:
-    #     path: "/tmp/helm-chart-repo/{{ helm_values.path }}"
+    # # - name: Run helm dependency build
+    # #   community.kubernetes.core.helm_dependency:
+    # #     path: "/tmp/helm-chart-repo/{{ helm_values.path }}"
 
-    # - name: Install Helm chart from Git repository
-    #   kubernetes.core.helm:
-    #     name: "{{ helm_values.name }}"
-    #     chart_ref: /tmp/helm-chart-repo/"{{ helm_values.path }}"
-    #     # values_files:
-    #     #   - /path/to/values.yaml
-    #     state: present
-    #     dependency_update: true
-    #     release_namespace: argocd
-    #     release_values: "{{ helm_values.definition }}"
-    #     create_namespace: true
+    # # - name: Install Helm chart from Git repository
+    # #   kubernetes.core.helm:
+    # #     name: "{{ helm_values.name }}"
+    # #     chart_ref: /tmp/helm-chart-repo/"{{ helm_values.path }}"
+    # #     # values_files:
+    # #     #   - /path/to/values.yaml
+    # #     state: present
+    # #     dependency_update: true
+    # #     release_namespace: argocd
+    # #     release_values: "{{ helm_values.definition }}"
+    # #     create_namespace: true
 
-    - name: Remove cloned Git repository
-      file:
-        path: /tmp/helm-chart-repo
-        state: absent
+    # - name: Remove cloned Git repository
+    #   file:
+    #     path: /tmp/helm-chart-repo
+    #     state: absent
 
     - name: Create SSH key secret for ArgoCD
       kubernetes.core.k8s:
