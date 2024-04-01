@@ -51,9 +51,9 @@ spec:
       {{- end }}
   template:
     metadata:
-      name: {{`'{{ name }}'`}}
+      name: {{`'{{ .name }}'`}}
     spec:
-      project: {{`'{{ project }}'`}}
+      project: {{`'{{ .project }}'`}}
       sources:
         - repoURL: {{`'{{ repository }}'`}}
           targetRevision: {{`'{{ revision }}'`}}
