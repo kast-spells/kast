@@ -49,6 +49,7 @@ spec:
         {{- end }}
       {{- end }}
   template:
+    goTemplate: true
     metadata:
       name: {{`'{{ .name }}'`}}
     spec:
