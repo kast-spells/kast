@@ -21,6 +21,7 @@ metadata:
   name: {{ $chapterName }}
   namespace: {{ default "argocd" $spellbook.argocdNamespace }}
 spec:
+  goTemplate: true
   generators:
   - list:
       elements:
@@ -49,7 +50,6 @@ spec:
         {{- end }}
       {{- end }}
   template:
-    goTemplate: true
     metadata:
       name: {{`'{{ .name }}'`}}
     spec:
