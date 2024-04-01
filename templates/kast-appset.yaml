@@ -44,7 +44,6 @@ spec:
           {{- else }}
           path: {{ default (default $spellbook.defaultSpell.path ($chapter.defaultSpell).path ) $spellDefinition.path }}
           project: {{ default $spellbook.name (default (default $chapter.projectName $spellbook.projectName ) $spellDefinition.projectName) }}
-          appParams: {{ $appParams }}
           revision: {{ default (default $spellbook.defaultSpell.revision ($chapter.defaultSpell).revision ) $spellDefinition.revision }}
           {{- end }}
         {{- end }}
