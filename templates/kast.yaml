@@ -55,7 +55,7 @@ data:
 ##lexicon merge 
 
 {{ include "debug" (list $debug $spellbook "spellbook" ) }}
-{{ include "configmap" (list "lexicon" (dict "lexicon" $lexicon) )}}
+
 
 {{ range $chapterName := $spellbook.chapters }}
   {{- $chapterIndex := dict "chapter" (dict "name" $chapterName) }}
