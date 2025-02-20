@@ -5,5 +5,5 @@
 # NonCommercial (CC BY-SA-NC) license. See the LICENSE file for details.
 apiVersion: v2
 name: kast
-description: kast renderer
+description: kast Argo CD Apps of Apps
 version: "0.1"

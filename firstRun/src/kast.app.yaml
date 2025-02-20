@@ -2,18 +2,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: fwck
+  name: default-project
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: git@github.com:kast-spells/spellbooks-library.git
+    repoURL: git@github.com:kast-spells/bookrackRepo.git
     targetRevision: master
     path: kast
     helm:
       parameters:
         - name: "name"
-          value: fwck
+          value: default-project
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

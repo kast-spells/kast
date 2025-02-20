@@ -48,7 +48,7 @@ path: charts/argo-cd # en el caso de ser un helm repo usar chart: nombre del cha
 revision: argo-cd-5.46.8
 namespace: argocd # opcional si no existe toma el nombre de la app
 noHelm: true #default is false toma el contenido de el repo + path como solo archivos yaml y aplica en argo
-definition: #equivalente a values 
+values: #equivalente a values 
   dex:
     enabled: false
   global:
@@ -108,7 +108,7 @@ runes: #esto permite dentro de una sola argo app instalar varios repos dfe helm 
   - repository: https://github.com/otro/repo.git
     path: cosa # en el caso de ser un helm repo usar chart: nombre del chart
     revision: argo-cd-5.46.8
-    definition: # y sus values
+    values: # y sus values
 
 ```
 ## Using Chapters and herency: 
@@ -132,6 +132,39 @@ lexicon:
 ```
 when used with a `clusterSelector` in any index or spell file will match all the labels in the selector with the ones in the lexicon if no cluster is selected will defautl to the local cluster
 
+## aditional stuff
+glosary:
+  lexicon: is a list of small snipets of configuration that provides a pointer to a rune of some type and enable the consumption of it
+  spellbook: a set of spell definitions used to implement each thing u will use and need
+  defaultSpell: the default spell to apply to a definition in case it does not contains a spell tree
+  spell: a helm chart used to create resources in a k8s enviroment
+  defaultGlyphs: a list of glyphs that will be added to all the spells on it scope (spellbook or chapter)
+  chapter: a directory with can have an index.yaml to with his own set of spells (equal to a k8s namespace)
+  glyph: a helm chart used in conjuntion with a spell definitin to consume through the lexicon a specific rune
+  definition: the "values" of a helm chart, the conntent of the values.yaml file
+  kast-glyph: a helm library with only .tpl files to consume the lexicon 
+  summon: kast default spell to create workload a helm chart to create a deployment, sts or cronjob
+  runicSelectors: a set of labels used in the summon to consume from the lexicon
+
+
+spellbook Spec
+bookrack/bookName/index.yaml
+bookrack/bookName/intro/mysql.yaml
+bookrack/bookName/bases/index.yaml
+bookrack/bookName/bases/hello-world.yaml
+
+
+index.yaml Spec
+name:
+defaultGlyphs:
+  - istio
+  - vault
+defaultSpell:
+  reposiltory: git@github.com:kast-spells/summon.git
+  definition:
+    networking:
+      gatewaySelector:
+        - type: istio-gw
 
 
 ## License

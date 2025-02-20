@@ -7,8 +7,8 @@ import yaml
 import shutil
 
 # Variables
-git_ssh_key_path = '/home/namen/.ssh/id_rsa'
-helm_values_file = '../../library/hildy/ishtar/argocd.yaml'
+git_ssh_key_path = 'path/to/sshkey'
+helm_values_file = '../../bookrack/path/to/argocd.yaml'
 repo_dest = '/tmp/helm-chart-repo'
 
 # Load Helm values from file

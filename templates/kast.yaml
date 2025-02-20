@@ -12,6 +12,8 @@
 
 {{- $debug := ""}}
 
+
+{{/*this will create a spellbook configmap */}}
 {{- define "configmap" -}}
 ---
 apiVersion: v1
@@ -33,7 +35,7 @@ data:
 
 #se puede agregar un if aca para q si no este definido el libro haga un "ls" y ver q libros hay y haga de multibook on one sweep
 
-{{- $path := printf "library/%s/index.yaml" .Values.name }}
+{{- $path := printf "bookrack/%s/index.yaml" .Values.name }}
 {{- if .Files.Glob $path }}
   {{- $default := .Files.Get $path | fromYaml }}
   {{- $_ := mergeOverwrite $default (dict "name" $.Values.name ) }}
@@ -44,7 +46,7 @@ data:
 
 ##lexicon definition must be from a config map in some place
 {{- $lexiconDefinition := dict }}
-{{- $path := print "library/" $spellbook.name "/_lexicon/*.y*ml"}}
+{{- $path := print "bookrack/" $spellbook.name "/_lexicon/*.y*ml"}}
 {{- $lexicon := list }}
 {{- range $lexiconPath, $_ := .Files.Glob $path }}
   {{- $lexiconDefinitions := ($.Files.Get $lexiconPath | fromYaml).lexicon }}
@@ -59,13 +61,13 @@ data:
 
 {{ range $chapterName := $spellbook.chapters }}
   {{- $chapterIndex := dict "chapter" (dict "name" $chapterName) }}
-  {{- $pathChapter := print "library/" $spellbook.name "/" $chapterName "/index.yaml" }}
+  {{- $pathChapter := print "bookrack/" $spellbook.name "/" $chapterName "/index.yaml" }}
   {{- if $.Files.Glob $pathChapter }}
     {{- $chapterIndex = dict "chapter" ($.Files.Get $pathChapter | fromYaml) }}
   {{- end }}
-  {{- $path := print "library/" $spellbook.name "/" $chapterName "/*.y*ml"}}
+  {{- $path := print "bookrack/" $spellbook.name "/" $chapterName "/*.y*ml"}}
   {{- range $spellPath, $_ := $.Files.Glob $path }}
-  {{- if not (eq $spellPath (print "library/" $spellbook.name "/" $chapterName "/index.yaml")) }}
+  {{- if not (eq $spellPath (print "bookrack/" $spellbook.name "/" $chapterName "/index.yaml")) }}
     {{- $sources := list }}
     {{- $appParams := deepCopy $spellbook.appParams }} 
     {{- $spellDefinition := ($.Files.Get $spellPath | fromYaml) }}
@@ -134,17 +136,17 @@ spec:
           - name: name
             value: {{ $spellDefinition.name }}
       {{- end }}
-      {{- $definition := "" }}
+      {{- $values := "" }}
       {{- if or $spellDefinition.chart $spellDefinition.path }}
-      {{- $definition = $spellDefinition.definition }}
-      {{- $_ =  unset $definition "runes" }}
+      {{- $values = $spellDefinition.values }}
+      {{- $_ =  unset $values "runes" }}
       {{- end }}
       {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
       {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
       {{- $_ =  unset $cleanSpellbook.spellbook "defaultSpell" }}
         values: |
-          {{- if $definition }}
-          {{- toYaml $definition | nindent 10 }}
+          {{- if $values }}
+          {{- toYaml $values | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
@@ -173,16 +175,16 @@ spec:
         {{- end }}
           - name: name
             value: {{ $spellDefinition.name }}
-        {{- $definition := "" }}
+        {{- $values := "" }}
         {{- if or $spellDefinition.chart $spellDefinition.path }}
-          {{- $definition = dict "glyphs" $spellDefinition.glyphs }}
+          {{- $values = dict "glyphs" $spellDefinition.glyphs }}
         {{- else }}  
-          {{- $definition = mergeOverwrite (default dict (deepCopy $defaultSpell.definition) ) $spellDefinition }}
-          {{- $_ =  unset $definition "runes" }}
-          {{- $_ =  unset $definition "appParams" }}
+          {{- $values = mergeOverwrite (default dict (deepCopy $defaultSpell.values) ) $spellDefinition }}
+          {{- $_ =  unset $values "runes" }}
+          {{- $_ =  unset $values "appParams" }}
         {{- end }}
         values: |
-          {{- toYaml $definition | nindent 10 }}
+          {{- toYaml $values | nindent 10 }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
           {{- toYaml $chapterIndex | nindent 10 }}
           lexicon:
@@ -214,8 +216,8 @@ spec:
             value: {{ $spellDefinition.name }}
         {{- end}}
         values: |
-          {{- if $rune.definition }}
-          {{- toYaml $rune.definition | nindent 10 }}
+          {{- if $rune.values }}
+          {{- toYaml $rune.values | nindent 10 }}
           {{- end }}
           {{- if not $spellDefinition.cleanDefinition }}
           {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
