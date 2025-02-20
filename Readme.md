@@ -133,6 +133,8 @@ lexicon:
 when used with a `clusterSelector` in any index or spell file will match all the labels in the selector with the ones in the lexicon if no cluster is selected will defautl to the local cluster
 
 ## aditional stuff
+
+```
 glosary:
   lexicon: is a list of small snipets of configuration that provides a pointer to a rune of some type and enable the consumption of it
   spellbook: a set of spell definitions used to implement each thing u will use and need
@@ -145,26 +147,16 @@ glosary:
   kast-glyph: a helm library with only .tpl files to consume the lexicon 
   summon: kast default spell to create workload a helm chart to create a deployment, sts or cronjob
   runicSelectors: a set of labels used in the summon to consume from the lexicon
+```
 
-
-spellbook Spec
+#### spellbook Spec
+```
 bookrack/bookName/index.yaml
 bookrack/bookName/intro/mysql.yaml
 bookrack/bookName/bases/index.yaml
 bookrack/bookName/bases/hello-world.yaml
+```
 
-
-index.yaml Spec
-name:
-defaultGlyphs:
-  - istio
-  - vault
-defaultSpell:
-  reposiltory: git@github.com:kast-spells/summon.git
-  definition:
-    networking:
-      gatewaySelector:
-        - type: istio-gw
 
 
 ## License
