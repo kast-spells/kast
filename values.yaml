@@ -5,7 +5,10 @@
 # NonCommercial (CC BY-SA-NC) license. See the LICENSE file for details.
 name: default-bookname
 appParams:
+  cleanDefinition: false
+  noHelm: false
   disableAutoSync: false
+  skipCrds: false
   # Sync policy
   syncPolicy:
     # managedNamespaceMetadata:
