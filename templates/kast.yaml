@@ -32,13 +32,13 @@ data:
 
 
 {{- $spellbook :=  dict "appParams" $.Values.appParams  }}
+{{- $_ := set $spellbook "name" (default $.Release.Name $.Values.name) }}
 
 #se puede agregar un if aca para q si no este definido el libro haga un "ls" y ver q libros hay y haga de multibook on one sweep
 
 {{- $path := printf "bookrack/%s/index.yaml" (default .Release.Name .Values.name) }}
 {{- if .Files.Glob $path }}
   {{- $default := .Files.Get $path | fromYaml }}
-  {{- $_ := mergeOverwrite $default (dict "name" (default $.Release.Name $.Values.name)  ) }}
   {{- $_ := mergeOverwrite $spellbook $default }}
 {{- end }}
 
@@ -60,10 +60,10 @@ data:
 
 
 {{ range $chapterName := $spellbook.chapters }}
-  {{- $chapter := dict "chapter" (dict "name" $chapterName) }}
+  {{- $chapter := dict "name" $chapterName }}
   {{- $pathChapter := print "bookrack/" $spellbook.name "/" $chapterName "/index.yaml" }}
   {{- if $.Files.Glob $pathChapter }}
-    {{- $chapter = dict "chapter" ($.Files.Get $pathChapter | fromYaml) }}
+    {{- $chapter = $.Files.Get $pathChapter | fromYaml }}
     {{- if not $chapter.name }}
       {{- $_ := set $chapter "name" $chapterName }}
     {{- end }}
@@ -73,7 +73,7 @@ data:
   {{- if not (eq $spellPath (print "bookrack/" $spellbook.name "/" $chapterName "/index.yaml")) }}
     {{- $appParams := deepCopy $spellbook.appParams }} 
     {{- $spellDefinition := ($.Files.Get $spellPath | fromYaml) }}
-    {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $chapter.chapter.appParams) ) }}
+    {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $chapter.appParams) ) }}
     {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $spellDefinition.appParams )) }}
     {{- $spell := (dict "name" $spellDefinition.name ) }}
 ---
@@ -91,7 +91,7 @@ metadata:
   {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  project: {{ default $spellbook.name (default (default $chapter.chapter.projectName $spellbook.projectName ) $spellDefinition.projectName) }}
+  project: {{ default $spellbook.name (default (default $chapter.projectName $spellbook.projectName ) $spellDefinition.projectName) }}
   {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
   {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
   {{- $_ =  unset $cleanSpellbook.spellbook "summon" }}
@@ -121,7 +121,7 @@ spec:
     ##TODO definir si queremos q el summon sea 100% chapter o book o si queremos overwrites
     en caso de merges y overwrites hay q fixear los values
   */}}
-    {{- $summon := default $spellbook.summon $chapter.chapter.summon}}
+    {{- $summon := mergeOverwrite (deepCopy $spellbook.summon) (deepCopy $chapter.summon)}}
     - repoURL: {{ $summon.repository }}
       path: {{ $summon.path }}
       targetRevision: {{ $summon.revision }}
@@ -134,13 +134,13 @@ spec:
         values: |
           {{- toYaml $values | nindent 10 }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
-          {{- toYaml $chapter | nindent 10 }}
+          {{- toYaml (dict "chapter" $chapter) | nindent 10 }}
           lexicon:
           {{- toYaml $lexicon | nindent 12 }}
   {{- end }}
   {{- /* kaster */}}
   {{- if $spellDefinition.glyphs }} 
-    {{- $kaster := default $spellbook.kaster $chapter.chapter.kaster}}
+    {{- $kaster := default $spellbook.kaster $chapter.kaster}}
     - repoURL: {{ $kaster.repository }}
       path: {{ $kaster.path }}
       targetRevision: {{ $kaster.revision }}
@@ -148,7 +148,7 @@ spec:
         values: |
           {{- toYaml (dict "glyphs" $spellDefinition.glyphs ) | nindent 10 }}
           {{- toYaml $cleanSpellbook | nindent 10 }}
-          {{- toYaml $chapter | nindent 10 }}
+          {{- toYaml (dict "chapter" $chapter) | nindent 10 }}
           lexicon:
           {{- toYaml $lexicon | nindent 12 }}
   {{- end }}
@@ -179,7 +179,7 @@ spec:
   {{- end }}
   destination:
     {{- $cluster := "" }}
-    {{- $clusterSelector := default (default $spellbook.clusterSelector $chapter.chapter.clusterSelector ) $spellDefinition.clusterSelector }}
+    {{- $clusterSelector := default (default $spellbook.clusterSelector $chapter.clusterSelector ) $spellDefinition.clusterSelector }}
     {{- if $clusterSelector }}
       {{- $clusters := get (include "glyph.runicIndexer" (list $lexicon $clusterSelector "k8s-cluster" $chapter.name ) | fromJson) "results" }}
       {{- range $clusters }}

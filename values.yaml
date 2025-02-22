@@ -3,7 +3,7 @@
 #
 # This work is licensed under the Creative Commons Attribution-ShareAlike 
 # NonCommercial (CC BY-SA-NC) license. See the LICENSE file for details.
-name: default-bookname
+# name: default-book
 appParams:
   cleanDefinition: false
   noHelm: false
