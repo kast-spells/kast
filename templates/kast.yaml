@@ -64,22 +64,18 @@ data:
   {{- $pathChapter := print "bookrack/" $spellbook.name "/" $chapterName "/index.yaml" }}
   {{- if $.Files.Glob $pathChapter }}
     {{- $chapter = dict "chapter" ($.Files.Get $pathChapter | fromYaml) }}
+    {{- if not $chapter.name }}
+      {{- $_ := set $chapter "name" $chapterName }}
+    {{- end }}
   {{- end }}
   {{- $path := print "bookrack/" $spellbook.name "/" $chapterName "/*.y*ml"}}
   {{- range $spellPath, $_ := $.Files.Glob $path }}
   {{- if not (eq $spellPath (print "bookrack/" $spellbook.name "/" $chapterName "/index.yaml")) }}
-    {{- $sources := list }}
     {{- $appParams := deepCopy $spellbook.appParams }} 
     {{- $spellDefinition := ($.Files.Get $spellPath | fromYaml) }}
     {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $chapter.chapter.appParams) ) }}
     {{- $_ := mergeOverwrite $appParams (deepCopy (default dict $spellDefinition.appParams )) }}
     {{- $spell := (dict "name" $spellDefinition.name ) }}
-    {{- if $spellDefinition.runes }}
-      {{- range $rune := $spellDefinition.runes }}
-        {{- $sources = append $sources $rune }}
-        {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
-      {{- end }}
-    {{- end }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -157,7 +153,9 @@ spec:
           {{- toYaml $lexicon | nindent 12 }}
   {{- end }}
   {{- /* runes */}}
+  {{- $ignoreDiff := (default list $appParams.ignoreDifferences) }}
   {{- range $rune := $spellDefinition.runes }}
+    {{- $ignoreDiff = concat $ignoreDiff (default list ($rune.appParams).ignoreDifferences) }}
     {{- if not ($rune.appParams).noOverite }}
       {{- $_ := mergeOverwrite $appParams (default dict $rune.appParams ) }}
     {{- end }}
@@ -211,11 +209,11 @@ spec:
     retry:
     {{- toYaml . | nindent 6 }}
     {{- end }}  
-  {{- if ($appParams).ignoreDifferences }}
+  {{- if $ignoreDiff }} ##TODO add ignore differences segun runas
   ignoreDifferences:
-    {{- toYaml $appParams.ignoreDifferences | nindent 4 }}
+    {{- toYaml $ignoreDiff | nindent 4 }}
   {{- end }}
-  {{- include "debug" (list $debug $sources $spellPath ) | nindent 0 }}
+  {{- include "debug" (list $debug $spellPath ) | nindent 0 }}
   {{- end }}
   {{- end }}
 {{- end }}
