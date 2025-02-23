@@ -10,7 +10,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: {{ default $.Values.name $.Values.projectName }}
+  name: {{ default $.Release.Name (default $.Values.name $.Values.projectName) }}
   namespace: argocd
 spec:
   sourceRepos:
