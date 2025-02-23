@@ -118,10 +118,9 @@ spec:
     {{- end }}
   {{- else }}
   {{- /* summon 
-    ##TODO definir si queremos q el summon sea 100% chapter o book o si queremos overwrites
-    en caso de merges y overwrites hay q fixear los values
+    ##TODO agregar flag para q no se haga el merge
   */}}
-    {{- $summon := mergeOverwrite (deepCopy $spellbook.summon) (deepCopy $chapter.summon)}}
+    {{- $summon := mergeOverwrite ( deepCopy (default dict $spellbook.summon ) ) ( deepCopy ( default dict $chapter.summon ) ) }}
     - repoURL: {{ $summon.repository }}
       path: {{ $summon.path }}
       targetRevision: {{ $summon.revision }}
