@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: {{ default $.Release.Name (default $.Values.name $.Values.projectName) }}
+  name: {{ default (default $.Values.projectName  $.Values.name ) $.Release.Name  }}
   namespace: argocd
   annotations:
     argocd.argoproj.io/hook: PreSync
