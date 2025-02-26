@@ -6,7 +6,7 @@ metadata:
   name: {{ default (default $.Values.projectName  $.Values.name ) $.Release.Name  }}
   namespace: argocd
   annotations:
-    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   sourceRepos:
   - '*'
