@@ -6,12 +6,14 @@
   {{- $_ := mergeOverwrite $default (dict "name" $.Values.name ) }}
   {{- $_ := mergeOverwrite $spellbook $default }}
 {{- end }}
-
+---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   name: {{ default $.Release.Name (default $.Values.name $.Values.projectName) }}
   namespace: argocd
+  annotation:
+    argocd.argoproj.io/hook: PreSync
 spec:
   sourceRepos:
   {{- with $spellbook.sourceRepos }}
