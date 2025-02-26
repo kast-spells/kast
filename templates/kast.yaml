@@ -91,7 +91,7 @@ metadata:
   {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  project: {{ default (default $spellbook.name (default $chapter.projectName $spellbook.projectName ) ) $spellDefinition.projectName }}
+  project: {{ default (default (default $chapter.projectName $spellbook.projectName ) $spellbook.name ) $spellDefinition.projectName }}
   {{- $cleanSpellbook := merge (dict "spellbook" (deepCopy $spellbook)) }}
   {{- $_ =  unset $cleanSpellbook.spellbook "appParams" }}
   {{- $_ =  unset $cleanSpellbook.spellbook "summon" }}
