@@ -1,11 +1,4 @@
 {{ if not .Values.projectDisabled }}
-{{- $spellbook :=  $.Values }}
-{{- $path := printf "library/%s/index.yaml" .Values.name }}
-{{- if .Files.Glob $path }}
-  {{- $default := .Files.Get $path | fromYaml }}
-  {{- $_ := mergeOverwrite $default (dict "name" $.Values.name ) }}
-  {{- $_ := mergeOverwrite $spellbook $default }}
-{{- end }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -16,11 +9,7 @@ metadata:
     argocd.argoproj.io/hook: PreSync
 spec:
   sourceRepos:
-  {{- with $spellbook.sourceRepos }}
-  {{- toYaml . | nindent 2 }}
-  {{- else }}
   - '*'
-  {{- end}}
   destinations:
   - namespace: '*'
     server: '*'
