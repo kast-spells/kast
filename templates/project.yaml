@@ -12,7 +12,7 @@ kind: AppProject
 metadata:
   name: {{ default $.Release.Name (default $.Values.name $.Values.projectName) }}
   namespace: argocd
-  annotation:
+  annotations:
     argocd.argoproj.io/hook: PreSync
 spec:
   sourceRepos:
