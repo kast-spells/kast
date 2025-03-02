@@ -120,13 +120,13 @@ spec:
   {{- /* summon 
     ##TODO agregar flag para q no se haga el merge
   */}}
-    {{- $summon := mergeOverwrite ( deepCopy (default dict ($spellbook.summon).values ) ) ( deepCopy ( default dict ($chapter.summon).values ) ) }}
+    {{- $summon := mergeOverwrite ( deepCopy (default dict $spellbook.summon ) ) ( deepCopy ( default dict $chapter.summon ) ) }}
     - repoURL: {{ $summon.repository }}
       path: {{ $summon.path }}
       targetRevision: {{ $summon.revision }}
       helm:
         {{- $values := "" }}
-        {{- $values = mergeOverwrite (default dict (deepCopy $summon) ) $spellDefinition }}
+        {{- $values = mergeOverwrite (default dict (deepCopy (default dict $summon.values)) ) $spellDefinition }}
         {{- $_ =  unset $values "runes" }}
         {{- $_ =  unset $values "appParams" }}
         {{- $_ =  unset $values "glyphs" }}
