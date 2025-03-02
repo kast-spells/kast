@@ -126,7 +126,7 @@ spec:
       targetRevision: {{ $summon.revision }}
       helm:
         {{- $values := "" }}
-        {{- $values = mergeOverwrite (default dict (deepCopy $summon.values) ) $spellDefinition }}
+        {{- $values = mergeOverwrite (default dict (deepCopy $summon) ) $spellDefinition }}
         {{- $_ =  unset $values "runes" }}
         {{- $_ =  unset $values "appParams" }}
         {{- $_ =  unset $values "glyphs" }}
