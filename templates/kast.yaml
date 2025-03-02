@@ -120,7 +120,7 @@ spec:
   {{- /* summon 
     ##TODO agregar flag para q no se haga el merge
   */}}
-    {{- $summon := mergeOverwrite ( deepCopy (default dict $spellbook.summon.values ) ) ( deepCopy ( default dict $chapter.summon.values ) ) }}
+    {{- $summon := mergeOverwrite ( deepCopy (default dict ($spellbook.summon).values ) ) ( deepCopy ( default dict ($chapter.summon).values ) ) }}
     - repoURL: {{ $summon.repository }}
       path: {{ $summon.path }}
       targetRevision: {{ $summon.revision }}
