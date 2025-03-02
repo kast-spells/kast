@@ -3,7 +3,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: {{ default (default $.Values.projectName  $.Values.name ) $.Release.Name  }}
+  name: {{ default (default $.Release.Name $.Values.name ) $.Values.projectName }}
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "-5"
