@@ -1,7 +1,139 @@
-Using Kast:
+> [!IMPORTANT]
+> WIP!!
+
+# Kast
+
+### Description
+
+> Todo!
+
+## How to use Kast
+
+### Create Bookrack
+
+First you need a repository to manage Kast Bookrack,
+
+```Bash
+mkdir my-bookrack
+cd my-bookrack
+git init
+```
+
+After that you need to "install" kast on your repository
+
+
+```Bash
+git submodule add https://github.com/kast-spells/kast.git kast
+```
+
+Now create a directory with the name `bookrack` to manage your books inside
+
+> [!IMPORTANT]
+> The name bookrack is mandatory since this is the directory that kast uses to build you Bookrack in ArgoCD
+
+```bash
+mkdir bookrack
+cd bookrack # my-bookrack/bookrack
+```
+
+After that, you are ready to setup your first book, now, lets make it, as an example this book is going to be called "my-first-book"
+
+> [!WARNING]
+> name must be lower case to comply with kubernetes namerules
+
+```bash
+mkdir my-first-book
+cd my-first-book #my-bookrack/bookrack/my-first-book
+```
+
+A book needs an `index.yaml` file that says the "chapters" and book name, just like this.
+
+```yaml
+#my-bookrack/bookrack/my-first-book/index.yaml
+name: my-first-book
+chapters:
+   - production
+```
+> [!IMPORTANT]
+> Chapters have to be added manually so you can work with you repo without having to sync non-ready chapters
+
+as you seen we added a chapter named production so we have to add this chapter's directory!
+
+```bash
+mkdir production
+cd production #my-bookrack/bookrack/my-first-book/production
+```
+
+You can add index files and more stuff on chapters but for this basic instalation guide, we are going to just add a spell (app), which looks something like this:
+
+```yaml
+#my-bookrack/bookrack/my-first-book/production/app-name.yaml
+name: app-name
+repository: git@github.com:helmchart/chart.git
+path: /path/to/chart
+revision: main # or any branch or release you prefer
+namespace: app-name # or the namespace you prefer
+values: # add the values you want to override from default values
+   someValueToOverride:
+   - name: override-this
+# Kast gonna take the default value and just replace the things that you modified here
+
+appParams: 
+  disableAutoSync: true
+```
+
+now we can git add, commit and push all out changes to a remote repo. lets imagine is in `me/my-bookrack`
+
+your directory tree should look like this:
+```
+my-bookrack
+│
+├── bookrack
+│   └── my-first-book
+│       ├── production
+│       │   └── app-name.yaml
+│       └── index.yaml
+└── kast # ...
+```
+now we have a spell on a chapter, on a book, on a bookrack, now we have to add the bookrack to argoCD and let Kast do the rest.
+
+create a new manifest like this one and apply it.
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: my-bookrack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:me/my-bookrack.git
+    targetRevision: main
+    path: kast # dont change this!
+    helm:
+      parameters:
+        - name: "name"
+          value: my-first-book
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    retry:
+      limit: 2
+    syncOptions:
+      - CreateNamespace=true
+```
+
+now apply this manifest and now you can see your app of apps on argocd! and keep track on values from bookrack repository
+
+> [!WARNING]
+> A known issue is that sometimes it can fail of sync since the project (with the name of the book) is not created, you can solve this by simple syncing the project name first
+
+---
+# OLD TUTORIAL
 1) in a git repository that will be used to store the spellbooks:
 
-`git submodule add https://github.com/kast-spells/kast.git kast`
 
 2) create the library directory, here will be stored each of your spellbooks
 3) create a directory for a spellbook with its name in the folder
