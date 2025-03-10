@@ -1,4 +1,4 @@
-Using Kast:
+# Using Kast:
 1) in a git repository that will be used to store the spellbooks:
 
 `git submodule add https://github.com/kast-spells/kast.git kast`
